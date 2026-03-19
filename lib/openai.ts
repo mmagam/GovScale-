@@ -91,11 +91,37 @@ export async function generateOpenAIAssessment(answers: AssessmentAnswer[]) {
     }
   });
 
-  const parsed = response.output_parsed;
+  const parsed = extractStructuredOutput(response);
 
   if (!parsed) {
     throw new Error("OpenAI response did not include parsed output.");
   }
 
   return parsed;
+}
+
+function extractStructuredOutput(response: unknown) {
+  const candidate = response as {
+    output_text?: string;
+    output?: Array<{
+      content?: Array<{
+        type?: string;
+        text?: string;
+      }>;
+    }>;
+  };
+
+  if (candidate.output_text) {
+    return JSON.parse(candidate.output_text);
+  }
+
+  const textBlock = candidate.output
+    ?.flatMap((item) => item.content ?? [])
+    .find((item) => item.type === "output_text" && item.text);
+
+  if (textBlock?.text) {
+    return JSON.parse(textBlock.text);
+  }
+
+  return null;
 }
