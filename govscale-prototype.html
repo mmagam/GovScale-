@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GovScale: Exponential Maturity Assessment Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              ink: "#0f172a",
+              slate: "#334155",
+              mist: "#e2e8f0",
+              fog: "#f8fafc",
+              accent: "#0f766e",
+              accentSoft: "#ccfbf1",
+              gold: "#b45309",
+              navy: "#1e3a5f"
+            },
+            boxShadow: {
+              glow: "0 24px 80px rgba(15, 23, 42, 0.12)",
+              card: "0 18px 50px rgba(15, 23, 42, 0.10)"
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      body {
+        background:
+          radial-gradient(circle at top right, rgba(15, 118, 110, 0.14), transparent 24%),
+          radial-gradient(circle at left center, rgba(30, 58, 95, 0.10), transparent 24%),
+          linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+      }
+
+      .glass {
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(10px);
+      }
+
+      .likert-option input:checked + span {
+        background: #0f766e;
+        color: #ffffff;
+        border-color: #0f766e;
+        box-shadow: 0 10px 24px rgba(15, 118, 110, 0.22);
+      }
+
+      .progress-fill {
+        transition: width 260ms ease;
+      }
+
+      .fade-in {
+        animation: fadeIn 240ms ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-ink">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      <header class="mb-6 flex flex-col gap-4 rounded-[28px] bg-ink px-6 py-6 text-white shadow-glow sm:px-8">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div class="mb-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-100">
+              GovScale
+            </div>
+            <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
+              Exponential Maturity Assessment Platform
+            </h1>
+            <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
+              A stakeholder-ready diagnostic prototype for government entities to assess organizational maturity, calculate a weighted score, and generate an executive scorecard instantly.
+            </p>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <div class="rounded-2xl bg-white/10 px-4 py-3">
+              <div class="text-slate-200">Questions</div>
+              <div class="mt-1 text-2xl font-semibold">34</div>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3">
+              <div class="text-slate-200">Pillars</div>
+              <div class="mt-1 text-2xl font-semibold">7</div>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3 col-span-2 sm:col-span-1">
+              <div class="text-slate-200">Scale</div>
+              <div class="mt-1 text-2xl font-semibold">1-5</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main id="app" class="grid gap-6"></main>
+    </div>
+
+    <script>
+      const assessmentData = [
+        {
+          id: "pillar1",
+          name: "Purpose & Alignment",
+          weight: 0.15,
+          questions: [
+            "1.1. Clear Ambition: Our organization has a highly ambitious, clearly written purpose that goes beyond basic service delivery to inspire significant, positive change for the public.",
+            "1.2. Shared Understanding: Every team member, partner, and key stakeholder can easily explain our core purpose and why it matters.",
+            "1.3. Daily Alignment: We use formal systems (like performance goals or project management tools) to ensure every daily task and strategic decision directly supports our core purpose.",
+            "1.4. External Inspiration: Our core purpose is communicated so powerfully that it actively attracts top talent, partners, and public engagement to our organization."
+          ]
+        },
+        {
+          id: "pillar2",
+          name: "Agility & Scaling",
+          weight: 0.25,
+          questions: [
+            "2.1. Flexible Talent Sourcing: We easily and instantly access a global pool of specialized external talent (like freelancers or experts) to form dynamic project teams, rather than relying only on full-time staff.",
+            "2.2. Automated Talent Management: We use smart, automated systems to instantly identify skill gaps, find the right people (internal or external), and handle their contracts and payments.",
+            "2.3. Active Community Collaboration: We have built a self-sustaining community of citizens and partners who actively help us co-create services, provide support, and improve our offerings.",
+            "2.4. Utilizing Public Input (Crowdsourcing): We continuously and automatically gather input from the public (crowdsourcing) to improve our data accuracy and identify gaps in our services.",
+            "2.5. Personalized Services: We use data and smart algorithms to provide a highly personalized, proactive experience for every citizen, anticipating what they need based on their specific life events.",
+            "2.6. Intelligent Automation: Our core daily operations run on autonomous, smart systems that manage processes, allocate resources, and fix issues with very little human intervention.",
+            "2.7. Asset Ownership Strategy: Rather than building and owning everything ourselves (like servers or physical infrastructure), we prioritize partnering with external platforms to access the best available technology.",
+            "2.8. Open Data Connections (APIs): We provide secure, open connections (APIs) that allow external developers and partners to easily build new services on top of our existing data and platforms.",
+            "2.9. Organic Public Engagement: Our digital services are so valuable and easy to use that citizens naturally engage with them and encourage others to do so, without us needing to spend heavily on marketing.",
+            "2.10. Data-Driven Improvements: We continuously track how citizens use our services in real-time and use that data to automatically optimize their experience."
+          ]
+        },
+        {
+          id: "pillar3",
+          name: "Internal Ops & Innovation",
+          weight: 0.25,
+          questions: [
+            "3.1. Seamless Partner Integration: We provide self-service digital portals that allow external partners to connect with our systems and share information seamlessly, without requiring manual work from our staff.",
+            "3.2. Citizen-Centric Design: Our digital interfaces are designed entirely around the citizen's journey (e.g., \"starting a business\" or \"having a child\"), completely hiding the complexity of our internal government departments.",
+            "3.3. Actionable Team Data: Our teams have real-time, predictive dashboards that not only track performance but automatically alert us to risks and create tasks when metrics fall behind.",
+            "3.4. Strategic Leadership Insights: Our leadership uses advanced, real-time dashboards that compare our performance against peer organizations and run simulations to recommend the best strategic decisions.",
+            "3.5. Culture of Experimentation: We actively encourage teams to rapidly test new ideas; we view \"intelligent failure\" as a valuable learning opportunity that is rewarded, not punished.",
+            "3.6. Standardized Testing: We use a standardized, automated process to test new initiatives on small groups of users before a full launch, storing all results in a central database to share learnings.",
+            "3.7. Empowered Teams: Instead of rigid hierarchies, we operate as a network of highly autonomous, multi-disciplinary teams that take full ownership of specific citizen services.",
+            "3.8. Decentralized Decision Making: Frontline teams are empowered to make operational decisions quickly without needing multiple layers of management approval, allowing leadership to focus on long-term strategy.",
+            "3.9. Modern Collaboration Tools: We use advanced digital workspaces that integrate our communication, project management, and knowledge sharing into one seamless platform.",
+            "3.10. Transparent Communication: We practice \"working out loud,\" where internal discussions, decisions, and knowledge are openly accessible to the entire organization by default."
+          ]
+        },
+        {
+          id: "pillar4",
+          name: "National Alignment",
+          weight: 0.15,
+          questions: [
+            "4.1. Driving the National Vision: Our strategic roadmap is explicitly linked to the national economic vision, and we act as a primary driver for major national initiatives.",
+            "4.2. Long-Term Future Planning: We maintain a dedicated focus on how our technology and services will evolve to support the country's long-term strategic plans (e.g., 50-year national visions).",
+            "4.3. Leading in Artificial Intelligence: We are recognized as a pioneer in implementing the National Strategy for Artificial Intelligence, with a comprehensive plan covering data, talent, and ethics.",
+            "4.4. Transparent Impact Reporting: We track our specific contributions to national performance indicators (KPIs) on a real-time, public-facing dashboard, serving as a model for other government entities."
+          ]
+        },
+        {
+          id: "pillar5",
+          name: "Data Ecosystem",
+          weight: 0.10,
+          questions: [
+            "5.1. Central Data Hub: We act as a central hub in the national data ecosystem, constantly sharing and receiving real-time data (like smart city sensors) to create smarter, interconnected services.",
+            "5.2. Predictive Analytics: We use advanced analytics not just to predict future public needs, but to automatically recommend and execute the best solutions before problems occur.",
+            "5.3. Real-Time Policy Simulation: We provide policymakers with a real-time \"digital twin\" (a virtual model of our operations) that allows them to test the impact of new policies safely before they are implemented."
+          ]
+        },
+        {
+          id: "pillar6",
+          name: "Digital Platform",
+          weight: 0.05,
+          questions: [
+            "6.1. Seamless Third-Party Integration: We operate a digital marketplace where citizens can access both our government services and approved private-sector services in one seamless experience.",
+            "6.2. Enabling External Innovation: We provide the digital tools (like SDKs) that allow external developers to easily build and launch their own innovative services within our digital ecosystem.",
+            "6.3. Advanced Payment Infrastructure: Our digital payment system functions as a major digital wallet, allowing citizens to easily handle both government fees and private transactions."
+          ]
+        },
+        {
+          id: "pillar7",
+          name: "Future Foresight",
+          weight: 0.05,
+          questions: [
+            "7.1. Continuous Trend Spotting: We have a dedicated team and automated systems that continuously scan for emerging global trends to maintain a clear view of the future.",
+            "7.2. Adaptive Strategy: Our strategic plans and budgets are highly flexible, continuously updating in real-time based on the new trends and future signals we identify.",
+            "7.3. Investing in the Future: We have a dedicated budget and \"innovation lab\" specifically designed to build prototypes and test disruptive, next-generation technologies."
+          ]
+        }
+      ];
+
+      const likertLabels = [
+        { value: 1, label: "Strongly Disagree" },
+        { value: 2, label: "Disagree" },
+        { value: 3, label: "Neutral" },
+        { value: 4, label: "Agree" },
+        { value: 5, label: "Strongly Agree" }
+      ];
+
+      const state = {
+        view: "landing",
+        currentPillarIndex: 0,
+        user: {
+          name: "",
+          department: ""
+        },
+        responses: {},
+        chart: null
+      };
+
+      const app = document.getElementById("app");
+
+      function render() {
+        if (state.view === "landing") {
+          renderLanding();
+        } else if (state.view === "assessment") {
+          renderAssessment();
+        } else {
+          renderResults();
+        }
+      }
+
+      function renderLanding() {
+        app.innerHTML = `
+          <section class="fade-in grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <div class="rounded-[28px] bg-gradient-to-br from-navy to-ink p-8 text-white shadow-card">
+              <div class="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em]">
+                Government Readiness Diagnostic
+              </div>
+              <h2 class="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
+                Measure institutional maturity across strategy, operations, and future readiness.
+              </h2>
+              <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+                GovScale helps leaders understand organizational readiness through a structured 34-question assessment, weighted scoring logic, and a visual executive scorecard.
+              </p>
+              <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                <div class="rounded-2xl bg-white/10 p-4">
+                  <div class="text-sm text-slate-200">Assessment Time</div>
+                  <div class="mt-2 text-xl font-semibold">8-12 min</div>
+                </div>
+                <div class="rounded-2xl bg-white/10 p-4">
+                  <div class="text-sm text-slate-200">Output</div>
+                  <div class="mt-2 text-xl font-semibold">Radar Scorecard</div>
+                </div>
+                <div class="rounded-2xl bg-white/10 p-4">
+                  <div class="text-sm text-slate-200">Scoring</div>
+                  <div class="mt-2 text-xl font-semibold">Weighted 1-5</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass rounded-[28px] border border-white/70 p-8 shadow-card">
+              <div class="mb-6">
+                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">
+                  View 1
+                </p>
+                <h3 class="mt-2 text-2xl font-semibold text-ink">Start Assessment</h3>
+                <p class="mt-3 text-sm leading-7 text-slate">
+                  Enter your details to launch the diagnostic. These details will appear on the final scorecard.
+                </p>
+              </div>
+
+              <form id="intakeForm" class="space-y-5">
+                <div>
+                  <label for="userName" class="mb-2 block text-sm font-medium text-slate">User Name</label>
+                  <input
+                    id="userName"
+                    name="userName"
+                    type="text"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none ring-0 transition focus:border-accent focus:shadow-lg"
+                    placeholder="e.g. Fatima Al Mansoori"
+                    value="${escapeHtml(state.user.name)}"
+                  />
+                </div>
+                <div>
+                  <label for="department" class="mb-2 block text-sm font-medium text-slate">Government Department</label>
+                  <input
+                    id="department"
+                    name="department"
+                    type="text"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none ring-0 transition focus:border-accent focus:shadow-lg"
+                    placeholder="e.g. Department of Digital Transformation"
+                    value="${escapeHtml(state.user.department)}"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="inline-flex w-full items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-700"
+                >
+                  Start Assessment
+                </button>
+              </form>
+            </div>
+          </section>
+        `;
+
+        document.getElementById("intakeForm").addEventListener("submit", (event) => {
+          event.preventDefault();
+          const name = document.getElementById("userName").value.trim();
+          const department = document.getElementById("department").value.trim();
+
+          if (!name || !department) {
+            alert("Please enter both User Name and Government Department to continue.");
+            return;
+          }
+
+          state.user.name = name;
+          state.user.department = department;
+          state.view = "assessment";
+          state.currentPillarIndex = 0;
+          render();
+        });
+      }
+
+      function renderAssessment() {
+        const pillar = assessmentData[state.currentPillarIndex];
+        const progress = ((state.currentPillarIndex + 1) / assessmentData.length) * 100;
+        const answeredCount = countAnsweredInPillar(pillar.id);
+
+        app.innerHTML = `
+          <section class="fade-in grid gap-6 lg:grid-cols-[0.88fr_1.12fr]">
+            <aside class="glass rounded-[28px] border border-white/70 p-6 shadow-card lg:sticky lg:top-6 lg:h-fit">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">View 2</p>
+                  <h2 class="mt-2 text-2xl font-semibold text-ink">Assessment Engine</h2>
+                </div>
+                <span class="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold text-accent">
+                  Pillar ${state.currentPillarIndex + 1} of ${assessmentData.length}
+                </span>
+              </div>
+
+              <div class="mt-6">
+                <div class="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-slate">
+                  <span>Progress</span>
+                  <span>${Math.round(progress)}%</span>
+                </div>
+                <div class="h-3 overflow-hidden rounded-full bg-slate-200">
+                  <div class="progress-fill h-full rounded-full bg-accent" style="width:${progress}%"></div>
+                </div>
+              </div>
+
+              <div class="mt-6 rounded-3xl bg-fog p-5">
+                <p class="text-sm font-semibold text-slate">Respondent</p>
+                <p class="mt-2 text-lg font-semibold text-ink">${escapeHtml(state.user.name)}</p>
+                <p class="mt-1 text-sm text-slate">${escapeHtml(state.user.department)}</p>
+              </div>
+
+              <div class="mt-6 rounded-3xl bg-ink p-5 text-white">
+                <p class="text-sm uppercase tracking-[0.16em] text-slate-200">Current Pillar</p>
+                <h3 class="mt-2 text-2xl font-semibold">${escapeHtml(pillar.name)}</h3>
+                <p class="mt-3 text-sm leading-7 text-slate-200">
+                  Weight: ${(pillar.weight * 100).toFixed(0)}% of final score. Each question must be answered before proceeding.
+                </p>
+              </div>
+
+              <div class="mt-6 grid gap-3">
+                ${assessmentData
+                  .map(
+                    (item, index) => `
+                      <div class="rounded-2xl border px-4 py-3 text-sm ${
+                        index === state.currentPillarIndex
+                          ? "border-accent bg-accentSoft text-accent"
+                          : index < state.currentPillarIndex
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-slate-200 bg-white text-slate"
+                      }">
+                        <div class="flex items-center justify-between gap-3">
+                          <span>${index + 1}. ${escapeHtml(item.name)}</span>
+                          <span class="font-semibold">${countAnsweredInPillar(item.id)}/${item.questions.length}</span>
+                        </div>
+                      </div>
+                    `
+                  )
+                  .join("")}
+              </div>
+            </aside>
+
+            <section class="glass rounded-[28px] border border-white/70 p-6 shadow-card sm:p-8">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Likert Scale</p>
+                  <h3 class="mt-2 text-3xl font-semibold text-ink">${escapeHtml(pillar.name)}</h3>
+                  <p class="mt-3 text-sm leading-7 text-slate">
+                    Select one response for each statement. Completion for this pillar: ${answeredCount}/${pillar.questions.length}.
+                  </p>
+                </div>
+                <div class="rounded-2xl bg-fog px-4 py-3 text-sm text-slate">
+                  1 = Strongly Disagree<br />
+                  5 = Strongly Agree
+                </div>
+              </div>
+
+              <div class="mt-8 space-y-6">
+                ${pillar.questions
+                  .map((question, index) => {
+                    const questionKey = `${pillar.id}-${index}`;
+                    return `
+                      <div class="rounded-[26px] border border-slate-200 bg-white p-5">
+                        <div class="mb-4 text-sm leading-7 text-ink">${escapeHtml(question)}</div>
+                        <div class="grid gap-3 sm:grid-cols-5">
+                          ${likertLabels
+                            .map((option) => {
+                              const checked = state.responses[questionKey] === option.value ? "checked" : "";
+                              return `
+                                <label class="likert-option cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    class="sr-only"
+                                    name="${questionKey}"
+                                    value="${option.value}"
+                                    ${checked}
+                                  />
+                                  <span class="block rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-medium text-slate transition hover:border-accent hover:text-accent">
+                                    <span class="block text-lg font-semibold">${option.value}</span>
+                                    <span class="mt-1 block text-xs leading-5">${option.label}</span>
+                                  </span>
+                                </label>
+                              `;
+                            })
+                            .join("")}
+                        </div>
+                      </div>
+                    `;
+                  })
+                  .join("")}
+              </div>
+
+              <div class="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  id="backButton"
+                  type="button"
+                  class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-slate-400 hover:text-ink ${state.currentPillarIndex === 0 ? "invisible" : ""}"
+                >
+                  Back
+                </button>
+
+                <button
+                  id="nextButton"
+                  type="button"
+                  class="inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-700"
+                >
+                  ${state.currentPillarIndex === assessmentData.length - 1 ? "Generate Scorecard" : "Next Pillar"}
+                </button>
+              </div>
+            </section>
+          </section>
+        `;
+
+        bindAssessmentEvents(pillar);
+      }
+
+      function bindAssessmentEvents(pillar) {
+        const radios = document.querySelectorAll(`input[name^="${pillar.id}-"]`);
+        radios.forEach((radio) => {
+          radio.addEventListener("change", (event) => {
+            const input = event.target;
+            state.responses[input.name] = Number(input.value);
+          });
+        });
+
+        const backButton = document.getElementById("backButton");
+        const nextButton = document.getElementById("nextButton");
+
+        if (backButton) {
+          backButton.addEventListener("click", () => {
+            if (state.currentPillarIndex > 0) {
+              state.currentPillarIndex -= 1;
+              render();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          });
+        }
+
+        nextButton.addEventListener("click", () => {
+          if (!isPillarComplete(pillar.id)) {
+            alert("Please answer all questions in this pillar before continuing.");
+            return;
+          }
+
+          if (state.currentPillarIndex < assessmentData.length - 1) {
+            state.currentPillarIndex += 1;
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            return;
+          }
+
+          state.view = "results";
+          render();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      }
+
+      function renderResults() {
+        const results = calculateResults();
+        const stageTone = getStageTone(results.stage);
+
+        app.innerHTML = `
+          <section class="fade-in grid gap-6">
+            <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <section class="glass rounded-[28px] border border-white/70 p-8 shadow-card">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">View 3</p>
+                    <h2 class="mt-2 text-3xl font-semibold tracking-tight text-ink">Results Dashboard</h2>
+                    <p class="mt-3 text-sm leading-7 text-slate">
+                      Weighted organizational maturity results for ${escapeHtml(state.user.name)} from ${escapeHtml(state.user.department)}.
+                    </p>
+                  </div>
+                  <div class="rounded-[24px] border ${stageTone.border} ${stageTone.bg} px-5 py-4">
+                    <div class="text-xs font-semibold uppercase tracking-[0.18em] ${stageTone.text}">Maturity Stage</div>
+                    <div class="mt-2 text-2xl font-semibold ${stageTone.text}">${results.stage}</div>
+                  </div>
+                </div>
+
+                <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                  <div class="rounded-[24px] bg-fog p-5">
+                    <div class="text-sm text-slate">Overall Score</div>
+                    <div class="mt-2 text-4xl font-semibold text-ink">${results.finalScore.toFixed(2)}</div>
+                    <div class="mt-2 text-xs uppercase tracking-[0.16em] text-slate">Out of 5.0</div>
+                  </div>
+                  <div class="rounded-[24px] bg-fog p-5">
+                    <div class="text-sm text-slate">Respondent</div>
+                    <div class="mt-2 text-lg font-semibold text-ink">${escapeHtml(state.user.name)}</div>
+                    <div class="mt-2 text-sm text-slate">${escapeHtml(state.user.department)}</div>
+                  </div>
+                  <div class="rounded-[24px] bg-fog p-5">
+                    <div class="text-sm text-slate">Assessment Date</div>
+                    <div class="mt-2 text-lg font-semibold text-ink">${formatDate(new Date())}</div>
+                    <div class="mt-2 text-sm text-slate">Prototype session</div>
+                  </div>
+                </div>
+
+                <div class="mt-8 rounded-[28px] bg-white p-5">
+                  <canvas id="radarChart" height="320"></canvas>
+                </div>
+              </section>
+
+              <section class="glass rounded-[28px] border border-white/70 p-8 shadow-card">
+                <div class="flex items-center justify-between gap-4">
+                  <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Pillar Breakdown</p>
+                    <h3 class="mt-2 text-2xl font-semibold text-ink">Weighted Scorecard</h3>
+                  </div>
+                  <button
+                    id="printButton"
+                    class="inline-flex items-center justify-center rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Export PDF
+                  </button>
+                </div>
+
+                <div class="mt-6 space-y-4">
+                  ${results.pillars
+                    .map(
+                      (pillar, index) => `
+                        <div class="rounded-[24px] border border-slate-200 bg-white p-5">
+                          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                              <div class="text-sm font-semibold text-ink">${index + 1}. ${escapeHtml(pillar.name)}</div>
+                              <div class="mt-1 text-xs uppercase tracking-[0.16em] text-slate">Weight ${(pillar.weight * 100).toFixed(0)}%</div>
+                            </div>
+                            <div class="text-right">
+                              <div class="text-sm text-slate">Pillar Average</div>
+                              <div class="text-2xl font-semibold text-ink">${pillar.average.toFixed(2)}</div>
+                            </div>
+                          </div>
+                          <div class="mt-4">
+                            <div class="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-slate">
+                              <span>Weighted Contribution</span>
+                              <span>${pillar.weightedContribution.toFixed(2)}</span>
+                            </div>
+                            <div class="h-3 overflow-hidden rounded-full bg-slate-200">
+                              <div class="h-full rounded-full bg-gradient-to-r from-accent to-navy" style="width:${(pillar.average / 5) * 100}%"></div>
+                            </div>
+                          </div>
+                        </div>
+                      `
+                    )
+                    .join("")}
+                </div>
+
+                <div class="mt-6 rounded-[24px] bg-fog p-5 text-sm leading-7 text-slate">
+                  <strong class="text-ink">Scoring logic:</strong> Each pillar average is calculated from its question responses on a 1-5 scale. The final score is the sum of each pillar average multiplied by its configured weight.
+                </div>
+
+                <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                  <button
+                    id="restartButton"
+                    class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-slate-400 hover:text-ink"
+                  >
+                    Restart Assessment
+                  </button>
+                </div>
+              </section>
+            </div>
+          </section>
+        `;
+
+        renderChart(results);
+
+        document.getElementById("restartButton").addEventListener("click", () => {
+          state.view = "landing";
+          state.currentPillarIndex = 0;
+          state.responses = {};
+          if (state.chart) {
+            state.chart.destroy();
+            state.chart = null;
+          }
+          render();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        document.getElementById("printButton").addEventListener("click", () => {
+          window.print();
+        });
+      }
+
+      function calculateResults() {
+        const pillars = assessmentData.map((pillar) => {
+          const values = pillar.questions.map((_, index) => state.responses[`${pillar.id}-${index}`]);
+          const total = values.reduce((sum, value) => sum + value, 0);
+          const average = total / values.length;
+          const weightedContribution = average * pillar.weight;
+
+          return {
+            name: pillar.name,
+            weight: pillar.weight,
+            average,
+            weightedContribution
+          };
+        });
+
+        const finalScore = pillars.reduce((sum, pillar) => sum + pillar.weightedContribution, 0);
+
+        return {
+          finalScore,
+          stage: getMaturityStage(finalScore),
+          pillars
+        };
+      }
+
+      function getMaturityStage(score) {
+        if (score <= 2.0) return "Traditional / Foundational";
+        if (score <= 3.0) return "Emerging / Digitizing";
+        if (score <= 4.0) return "Advanced / Connected";
+        return "Exponential / Future-Ready";
+      }
+
+      function getStageTone(stage) {
+        if (stage === "Traditional / Foundational") {
+          return {
+            bg: "bg-amber-50",
+            border: "border-amber-200",
+            text: "text-amber-700"
+          };
+        }
+
+        if (stage === "Emerging / Digitizing") {
+          return {
+            bg: "bg-sky-50",
+            border: "border-sky-200",
+            text: "text-sky-700"
+          };
+        }
+
+        if (stage === "Advanced / Connected") {
+          return {
+            bg: "bg-emerald-50",
+            border: "border-emerald-200",
+            text: "text-emerald-700"
+          };
+        }
+
+        return {
+          bg: "bg-purple-50",
+          border: "border-purple-200",
+          text: "text-purple-700"
+        };
+      }
+
+      function renderChart(results) {
+        const ctx = document.getElementById("radarChart");
+        if (state.chart) {
+          state.chart.destroy();
+        }
+
+        state.chart = new Chart(ctx, {
+          type: "radar",
+          data: {
+            labels: results.pillars.map((pillar) => pillar.name),
+            datasets: [
+              {
+                label: "Pillar Average",
+                data: results.pillars.map((pillar) => pillar.average.toFixed(2)),
+                backgroundColor: "rgba(15, 118, 110, 0.18)",
+                borderColor: "rgba(15, 118, 110, 1)",
+                borderWidth: 2.5,
+                pointBackgroundColor: "rgba(15, 118, 110, 1)",
+                pointBorderColor: "#ffffff",
+                pointHoverBackgroundColor: "#ffffff",
+                pointHoverBorderColor: "rgba(15, 118, 110, 1)"
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: {
+                  color: "#334155",
+                  font: {
+                    family: "ui-sans-serif, system-ui, sans-serif",
+                    weight: 600
+                  }
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const pillar = results.pillars[context.dataIndex];
+                    return `${pillar.name}: ${pillar.average.toFixed(2)} (weight ${(pillar.weight * 100).toFixed(0)}%)`;
+                  }
+                }
+              }
+            },
+            scales: {
+              r: {
+                min: 1,
+                max: 5,
+                ticks: {
+                  stepSize: 1,
+                  backdropColor: "transparent",
+                  color: "#64748b"
+                },
+                angleLines: {
+                  color: "rgba(148, 163, 184, 0.35)"
+                },
+                grid: {
+                  color: "rgba(148, 163, 184, 0.35)"
+                },
+                pointLabels: {
+                  color: "#0f172a",
+                  font: {
+                    size: 12,
+                    weight: 600
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function isPillarComplete(pillarId) {
+        const pillar = assessmentData.find((item) => item.id === pillarId);
+        return pillar.questions.every((_, index) => state.responses[`${pillarId}-${index}`]);
+      }
+
+      function countAnsweredInPillar(pillarId) {
+        const pillar = assessmentData.find((item) => item.id === pillarId);
+        return pillar.questions.filter((_, index) => Boolean(state.responses[`${pillarId}-${index}`])).length;
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function formatDate(date) {
+        return date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric"
+        });
+      }
+
+      render();
+    </script>
+  </body>
+</html>
