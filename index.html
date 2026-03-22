@@ -3,9 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>GovScale: Exponential Maturity Assessment Platform</title>
+    <title>GovScale: Exponential Maturity Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore-compat.js"></script>
     <script>
@@ -139,14 +141,27 @@
             <div class="mb-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-100">
               GovScale
             </div>
-            <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Exponential Maturity Assessment Platform
-            </h1>
+            <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Exponential Maturity Assessment</h1>
             <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
               A stakeholder-ready diagnostic prototype for government entities to assess organizational maturity, calculate a weighted score, and generate an executive scorecard instantly.
             </p>
           </div>
-          <div class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+          <div class="flex flex-col gap-4 lg:items-end">
+            <div class="flex flex-wrap gap-3">
+              <button
+                id="assessmentNavButton"
+                class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                Assessment
+              </button>
+              <button
+                id="adminNavButton"
+                class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                Admin Dashboard
+              </button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
             <div class="rounded-2xl bg-white/10 px-4 py-3">
               <div class="text-slate-200">Questions</div>
               <div class="mt-1 text-2xl font-semibold">34</div>
@@ -158,6 +173,7 @@
             <div class="rounded-2xl bg-white/10 px-4 py-3 col-span-2 sm:col-span-1">
               <div class="text-slate-200">Scale</div>
               <div class="mt-1 text-2xl font-semibold">1-5</div>
+            </div>
             </div>
           </div>
         </div>
@@ -172,6 +188,7 @@
           id: "pillar1",
           name: "Purpose & Alignment",
           weight: 0.15,
+          dimensions: [{ id: "mtp", name: "MTP", indexes: [0, 1, 2, 3] }],
           questions: [
             "1.1. Clear Ambition: Our organization has a highly ambitious, clearly written purpose that goes beyond basic service delivery to inspire significant, positive change for the public.",
             "1.2. Shared Understanding: Every team member, partner, and key stakeholder can easily explain our core purpose and why it matters.",
@@ -183,6 +200,13 @@
           id: "pillar2",
           name: "Agility & Scaling",
           weight: 0.25,
+          dimensions: [
+            { id: "staff-on-demand", name: "Staff on Demand", indexes: [0, 1] },
+            { id: "community-crowd", name: "Community & Crowd", indexes: [2, 3] },
+            { id: "algorithms-ai", name: "Algorithms & AI", indexes: [4, 5] },
+            { id: "leveraged-assets", name: "Leveraged Assets", indexes: [6, 7] },
+            { id: "engagement-mechanics", name: "Engagement Mechanics", indexes: [8, 9] }
+          ],
           questions: [
             "2.1. Flexible Talent Sourcing: We easily and instantly access a global pool of specialized external talent (like freelancers or experts) to form dynamic project teams, rather than relying only on full-time staff.",
             "2.2. Automated Talent Management: We use smart, automated systems to instantly identify skill gaps, find the right people (internal or external), and handle their contracts and payments.",
@@ -200,6 +224,13 @@
           id: "pillar3",
           name: "Internal Ops & Innovation",
           weight: 0.25,
+          dimensions: [
+            { id: "interfaces", name: "Interfaces", indexes: [0, 1] },
+            { id: "dashboards", name: "Dashboards", indexes: [2, 3] },
+            { id: "experimentation", name: "Experimentation", indexes: [4, 5] },
+            { id: "autonomy", name: "Autonomy", indexes: [6, 7] },
+            { id: "social-technologies", name: "Social Technologies", indexes: [8, 9] }
+          ],
           questions: [
             "3.1. Seamless Partner Integration: We provide self-service digital portals that allow external partners to connect with our systems and share information seamlessly, without requiring manual work from our staff.",
             "3.2. Citizen-Centric Design: Our digital interfaces are designed entirely around the citizen's journey (e.g., \"starting a business\" or \"having a child\"), completely hiding the complexity of our internal government departments.",
@@ -217,6 +248,7 @@
           id: "pillar4",
           name: "National Alignment",
           weight: 0.15,
+          dimensions: [{ id: "national-strategy-alignment", name: "National Strategy Alignment", indexes: [0, 1, 2, 3] }],
           questions: [
             "4.1. Driving the National Vision: Our strategic roadmap is explicitly linked to the national economic vision, and we act as a primary driver for major national initiatives.",
             "4.2. Long-Term Future Planning: We maintain a dedicated focus on how our technology and services will evolve to support the country's long-term strategic plans (e.g., 50-year national visions).",
@@ -228,6 +260,7 @@
           id: "pillar5",
           name: "Data Ecosystem",
           weight: 0.10,
+          dimensions: [{ id: "data-ecosystem", name: "Data Ecosystem", indexes: [0, 1, 2] }],
           questions: [
             "5.1. Central Data Hub: We act as a central hub in the national data ecosystem, constantly sharing and receiving real-time data (like smart city sensors) to create smarter, interconnected services.",
             "5.2. Predictive Analytics: We use advanced analytics not just to predict future public needs, but to automatically recommend and execute the best solutions before problems occur.",
@@ -238,6 +271,7 @@
           id: "pillar6",
           name: "Digital Platform",
           weight: 0.05,
+          dimensions: [{ id: "platform-evolution", name: "Platform Evolution", indexes: [0, 1, 2] }],
           questions: [
             "6.1. Seamless Third-Party Integration: We operate a digital marketplace where citizens can access both our government services and approved private-sector services in one seamless experience.",
             "6.2. Enabling External Innovation: We provide the digital tools (like SDKs) that allow external developers to easily build and launch their own innovative services within our digital ecosystem.",
@@ -248,6 +282,7 @@
           id: "pillar7",
           name: "Future Foresight",
           weight: 0.05,
+          dimensions: [{ id: "future-foresight", name: "Future Foresight", indexes: [0, 1, 2] }],
           questions: [
             "7.1. Continuous Trend Spotting: We have a dedicated team and automated systems that continuously scan for emerging global trends to maintain a clear view of the future.",
             "7.2. Adaptive Strategy: Our strategic plans and budgets are highly flexible, continuously updating in real-time based on the new trends and future signals we identify.",
@@ -339,19 +374,60 @@
         },
         responses: {},
         chart: null,
+        adminChart: null,
         saveStatus: "",
-        savedAssessmentKey: null
+        savedAssessmentKey: null,
+        admin: {
+          loading: false,
+          error: "",
+          records: [],
+          departmentFilter: "all",
+          startDate: "",
+          endDate: "",
+          sortKey: "finalScore",
+          sortDirection: "desc",
+          compareDepartments: []
+        }
       };
 
       const app = document.getElementById("app");
 
       function render() {
+        bindGlobalNav();
         if (state.view === "landing") {
           renderLanding();
         } else if (state.view === "assessment") {
           renderAssessment();
+        } else if (state.view === "admin") {
+          renderAdminDashboard();
         } else {
           renderResults();
+        }
+      }
+
+      function bindGlobalNav() {
+        const assessmentButton = document.getElementById("assessmentNavButton");
+        const adminButton = document.getElementById("adminNavButton");
+
+        if (assessmentButton && !assessmentButton.dataset.bound) {
+          assessmentButton.dataset.bound = "true";
+          assessmentButton.addEventListener("click", () => {
+            state.view = "landing";
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          });
+        }
+
+        if (adminButton && !adminButton.dataset.bound) {
+          adminButton.dataset.bound = "true";
+          adminButton.addEventListener("click", async () => {
+            state.view = "admin";
+            render();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            if (!state.admin.records.length) {
+              await loadAdminRecords();
+            }
+          });
         }
       }
 
@@ -631,7 +707,7 @@
         const stageTone = getStageTone(results.stage);
 
         app.innerHTML = `
-          <section class="fade-in grid gap-6">
+          <section id="resultsBoard" class="fade-in grid gap-6">
             <section class="executive-banner overflow-hidden rounded-[32px] p-8 text-white shadow-glow lg:p-10">
               <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
                 <div class="max-w-3xl">
@@ -672,7 +748,7 @@
                     </div>
                     <div class="rounded-2xl bg-white/12 px-4 py-3">
                       <div class="text-xs uppercase tracking-[0.16em] text-white/70">Report Type</div>
-                      <div class="mt-2 text-lg font-semibold">City of Dubai Executive Board</div>
+                      <div class="mt-2 text-lg font-semibold">Exponential Maturity Assessment</div>
                     </div>
                   </div>
                   <div id="saveStatus" class="mt-4 rounded-2xl border border-white/15 bg-white/8 px-4 py-3 text-xs font-medium leading-6 text-white/82">
@@ -728,6 +804,26 @@
                               </div>
                             </div>
                           </div>
+                          <div class="mt-4 space-y-3 pl-4">
+                            ${pillar.dimensions
+                              .map(
+                                (dimension) => `
+                                  <div>
+                                    <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium text-slate">
+                                      <span class="uppercase tracking-[0.12em]">${escapeHtml(dimension.name)}</span>
+                                      <span>${dimension.average.toFixed(1)} / 5.0</span>
+                                    </div>
+                                    <div class="gap-track h-2 overflow-hidden rounded-full">
+                                      <div class="flex h-full overflow-hidden rounded-full">
+                                        <div style="width:${(dimension.average / 5) * 100}%; background:${pillar.accent}; opacity:0.9"></div>
+                                        <div style="width:${(dimension.gap / 5) * 100}%; background:rgba(203, 213, 225, 0.4)"></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                `
+                              )
+                              .join("")}
+                          </div>
                         </div>
                       `
                     )
@@ -778,6 +874,18 @@
                         <div class="mt-5 rounded-[24px] p-4 text-sm leading-7" style="background:${pillar.cardBackground}; color:#244154">
                           ${pillar.narrative}
                         </div>
+                        <div class="mt-4 grid gap-2 rounded-[22px] bg-slate-50 p-4 sm:grid-cols-2">
+                          ${pillar.dimensions
+                            .map(
+                              (dimension) => `
+                                <div class="rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                                  <div class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate">${escapeHtml(dimension.name)}</div>
+                                  <div class="mt-1 text-sm font-semibold text-ink">${dimension.average.toFixed(1)} / 5.0</div>
+                                </div>
+                              `
+                            )
+                            .join("")}
+                        </div>
                         <div class="mt-4 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-slate">
                           <span>Weight ${(pillar.weight * 100).toFixed(0)}%</span>
                           <span>Contribution ${pillar.weightedContribution.toFixed(2)}</span>
@@ -814,26 +922,538 @@
         });
 
         document.getElementById("printButton").addEventListener("click", () => {
-          window.print();
+          exportSectionToPdf("resultsBoard", `exponential-maturity-assessment-${slugify(state.user.department || "report")}.pdf`);
         });
       }
 
-      function calculateResults() {
+      function renderAdminDashboard() {
+        const filteredRecords = getFilteredAdminRecords();
+        const departmentOptions = [...new Set(state.admin.records.map((record) => record.department).filter(Boolean))].sort();
+        const compareDepartments = state.admin.compareDepartments.length
+          ? state.admin.compareDepartments
+          : departmentOptions.slice(0, Math.min(3, departmentOptions.length));
+        const departmentAggregates = getDepartmentAggregates(filteredRecords);
+        const organizationScore =
+          filteredRecords.length
+            ? filteredRecords.reduce((sum, record) => sum + record.finalScore, 0) / filteredRecords.length
+            : 0;
+        const organizationStage = filteredRecords.length ? getMaturityStage(organizationScore) : "Traditional";
+        const organizationTone = getStageTone(organizationStage);
+
+        app.innerHTML = `
+          <section id="adminBoard" class="fade-in grid gap-6">
+            <section class="executive-banner overflow-hidden rounded-[32px] p-8 text-white shadow-glow lg:p-10">
+              <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+                <div class="max-w-3xl">
+                  <p class="text-sm font-semibold uppercase tracking-[0.24em] text-white/80">Admin Dashboard</p>
+                  <h2 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Exponential Maturity Assessment</h2>
+                  <p class="mt-4 max-w-2xl text-sm leading-7 text-white/82 sm:text-base">
+                    Executive command center for organization-wide maturity tracking, department benchmarking, and cross-entity capability analysis.
+                  </p>
+                  <div class="mt-6 flex flex-wrap gap-3">
+                    <div class="metric-chip rounded-2xl px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.18em] text-white/70">Organization Overall Score</div>
+                      <div class="mt-2 text-4xl font-semibold">${filteredRecords.length ? organizationScore.toFixed(1) : "--"} <span class="text-xl font-medium text-white/70">/ 5.0</span></div>
+                    </div>
+                    <div class="metric-chip rounded-2xl px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.18em] text-white/70">Assessments</div>
+                      <div class="mt-2 text-2xl font-semibold">${filteredRecords.length}</div>
+                    </div>
+                    <div class="metric-chip rounded-2xl px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.18em] text-white/70">Departments</div>
+                      <div class="mt-2 text-2xl font-semibold">${departmentAggregates.length}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="max-w-xl rounded-[28px] bg-white/10 p-6 backdrop-blur">
+                  <div
+                    class="inline-flex rounded-full border border-white/20 bg-white/12 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em]"
+                    style="color:${organizationTone.textColor}; background:${organizationTone.bgColor}; border-color:${organizationTone.borderColor}"
+                  >
+                    ${organizationStage}
+                  </div>
+                  <p class="mt-4 text-sm leading-7 text-white/86">
+                    ${filteredRecords.length ? overallStageComments[organizationStage] : "No assessment records match the current filter set. Adjust the filters below to view organization insights."}
+                  </p>
+                  <div class="mt-5 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      id="exportAdminPdfButton"
+                      class="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-accent transition hover:bg-slate-100"
+                    >
+                      Export Executive Report (PDF)
+                    </button>
+                    <button
+                      id="adminBackButton"
+                      class="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                    >
+                      Back to Assessment
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+              <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Global Filters</p>
+                  <h3 class="mt-2 text-2xl font-semibold text-ink">Filter Organization Data</h3>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                  <label class="block text-sm">
+                    <span class="mb-2 block font-medium text-slate">Start Date</span>
+                    <input id="adminStartDate" type="date" value="${state.admin.startDate}" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink" />
+                  </label>
+                  <label class="block text-sm">
+                    <span class="mb-2 block font-medium text-slate">End Date</span>
+                    <input id="adminEndDate" type="date" value="${state.admin.endDate}" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink" />
+                  </label>
+                  <label class="block text-sm">
+                    <span class="mb-2 block font-medium text-slate">Department</span>
+                    <select id="adminDepartmentFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink">
+                      <option value="all">All departments</option>
+                      ${departmentOptions
+                        .map(
+                          (department) => `
+                            <option value="${escapeHtml(department)}" ${state.admin.departmentFilter === department ? "selected" : ""}>
+                              ${escapeHtml(department)}
+                            </option>
+                          `
+                        )
+                        .join("")}
+                    </select>
+                  </label>
+                  <div class="block text-sm">
+                    <span class="mb-2 block font-medium text-slate">Compare Departments (2-3)</span>
+                    <div id="compareDepartmentOptions" class="grid max-h-32 gap-2 overflow-auto rounded-2xl border border-slate-200 bg-white p-3">
+                      ${departmentOptions
+                        .map(
+                          (department) => `
+                            <label class="flex items-center gap-2 text-sm text-ink">
+                              <input
+                                type="checkbox"
+                                name="compareDepartments"
+                                value="${escapeHtml(department)}"
+                                class="h-4 w-4 rounded border-slate-300 text-accent"
+                                ${compareDepartments.includes(department) ? "checked" : ""}
+                              />
+                              <span>${escapeHtml(department)}</span>
+                            </label>
+                          `
+                        )
+                        .join("")}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+                <div class="flex items-end justify-between gap-4">
+                  <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Department Ranking Leaderboard</p>
+                    <h3 class="mt-2 text-2xl font-semibold text-ink">Performance Table</h3>
+                  </div>
+                  <div class="rounded-2xl bg-accentSoft px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                    Sorted by ${escapeHtml(state.admin.sortKey)}
+                  </div>
+                </div>
+                <div class="mt-6 overflow-x-auto rounded-[28px] border border-slate-200 bg-white">
+                  <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50">
+                      <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate">
+                        ${[
+                          ["department", "Department Name"],
+                          ["respondent", "Respondent Name"],
+                          ["date", "Date"],
+                          ["finalScore", "Total Score"],
+                          ["stage", "Maturity Stage"]
+                        ]
+                          .map(
+                            ([key, label]) => `
+                              <th class="px-4 py-3">
+                                <button data-sort-key="${key}" class="inline-flex items-center gap-2 hover:text-accent">
+                                  ${label}
+                                  <span>${state.admin.sortKey === key ? (state.admin.sortDirection === "desc" ? "↓" : "↑") : ""}</span>
+                                </button>
+                              </th>
+                            `
+                          )
+                          .join("")}
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      ${filteredRecords.length
+                        ? getSortedAdminRecords(filteredRecords)
+                            .map((record) => {
+                              const tone = getStageTone(record.stage);
+                              return `
+                                <tr>
+                                  <td class="px-4 py-4 font-semibold text-ink">${escapeHtml(record.department)}</td>
+                                  <td class="px-4 py-4 text-slate">${escapeHtml(record.respondentName)}</td>
+                                  <td class="px-4 py-4 text-slate">${formatDate(record.date)}</td>
+                                  <td class="px-4 py-4 font-semibold text-ink">${record.finalScore.toFixed(2)}</td>
+                                  <td class="px-4 py-4">
+                                    <span class="inline-flex rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]" style="color:${tone.textColor}; background:${tone.bgColor}; border-color:${tone.borderColor}">
+                                      ${record.stage}
+                                    </span>
+                                  </td>
+                                </tr>
+                              `;
+                            })
+                            .join("")
+                        : `
+                            <tr>
+                              <td colspan="5" class="px-4 py-10 text-center text-slate">No assessments match the current filter settings.</td>
+                            </tr>
+                          `}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+                <div class="flex items-end justify-between gap-4">
+                  <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Cross-Department Radar</p>
+                    <h3 class="mt-2 text-2xl font-semibold text-ink">Overlay Comparison</h3>
+                  </div>
+                  <div class="rounded-2xl bg-accentSoft px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                    Up to 3 departments
+                  </div>
+                </div>
+                <div class="mt-6 rounded-[28px] bg-white p-5">
+                  <canvas id="adminRadarChart" height="340"></canvas>
+                </div>
+              </div>
+            </section>
+
+            <section class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+              <div class="flex items-end justify-between gap-4">
+                <div>
+                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Organization Heatmap</p>
+                  <h3 class="mt-2 text-2xl font-semibold text-ink">Department vs Pillar View</h3>
+                </div>
+              </div>
+              <div class="mt-6 overflow-x-auto rounded-[28px] border border-slate-200 bg-white">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                  <thead class="bg-slate-50">
+                    <tr class="text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate">
+                      <th class="px-4 py-3">Department</th>
+                      ${assessmentData.map((pillar) => `<th class="px-4 py-3">${escapeHtml(pillar.name)}</th>`).join("")}
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${departmentAggregates.length
+                      ? departmentAggregates
+                          .map(
+                            (aggregate) => `
+                              <tr>
+                                <td class="px-4 py-4 font-semibold text-ink">${escapeHtml(aggregate.department)}</td>
+                                ${aggregate.pillars
+                                  .map((pillar) => {
+                                    const heatmap = getHeatmapTone(pillar.average);
+                                    return `
+                                      <td class="px-4 py-4">
+                                        <div class="rounded-2xl px-3 py-2 text-center font-semibold" style="background:${heatmap.background}; color:${heatmap.text}">
+                                          ${pillar.average.toFixed(1)}
+                                        </div>
+                                      </td>
+                                    `;
+                                  })
+                                  .join("")}
+                              </tr>
+                            `
+                          )
+                          .join("")
+                      : `
+                          <tr>
+                            <td colspan="${assessmentData.length + 1}" class="px-4 py-10 text-center text-slate">No department data available for the current filter set.</td>
+                          </tr>
+                        `}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+        `;
+
+        bindAdminControls();
+        renderAdminCompareChart(departmentAggregates, compareDepartments);
+      }
+
+      async function loadAdminRecords() {
+        state.admin.loading = true;
+        state.admin.error = "";
+        renderAdminDashboard();
+
+        if (!firestoreDb) {
+          state.admin.loading = false;
+          state.admin.error = "Firebase is not connected. Admin Dashboard cannot load records.";
+          renderAdminDashboard();
+          return;
+        }
+
+        try {
+          const snapshot = await firestoreDb.collection("assessments").get();
+          state.admin.records = snapshot.docs.map((doc) => normalizeAssessmentRecord(doc.id, doc.data()));
+          state.admin.loading = false;
+          renderAdminDashboard();
+        } catch (error) {
+          console.error("Failed to load admin records:", error);
+          state.admin.loading = false;
+          state.admin.error = "Failed to load assessments from Firestore.";
+          renderAdminDashboard();
+        }
+      }
+
+      function bindAdminControls() {
+        const startDate = document.getElementById("adminStartDate");
+        const endDate = document.getElementById("adminEndDate");
+        const departmentFilter = document.getElementById("adminDepartmentFilter");
+        const exportButton = document.getElementById("exportAdminPdfButton");
+        const backButton = document.getElementById("adminBackButton");
+        const sortButtons = document.querySelectorAll("[data-sort-key]");
+        const compareCheckboxes = document.querySelectorAll('input[name="compareDepartments"]');
+
+        if (startDate) {
+          startDate.addEventListener("change", (event) => {
+            state.admin.startDate = event.target.value;
+            renderAdminDashboard();
+          });
+        }
+
+        if (endDate) {
+          endDate.addEventListener("change", (event) => {
+            state.admin.endDate = event.target.value;
+            renderAdminDashboard();
+          });
+        }
+
+        if (departmentFilter) {
+          departmentFilter.addEventListener("change", (event) => {
+            state.admin.departmentFilter = event.target.value;
+            renderAdminDashboard();
+          });
+        }
+
+        compareCheckboxes.forEach((checkbox) => {
+          checkbox.addEventListener("change", () => {
+            const selected = Array.from(compareCheckboxes)
+              .filter((input) => input.checked)
+              .map((input) => input.value)
+              .slice(0, 3);
+
+            state.admin.compareDepartments = selected;
+            renderAdminDashboard();
+          });
+        });
+
+        sortButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const { sortKey } = button.dataset;
+            if (state.admin.sortKey === sortKey) {
+              state.admin.sortDirection = state.admin.sortDirection === "desc" ? "asc" : "desc";
+            } else {
+              state.admin.sortKey = sortKey;
+              state.admin.sortDirection = "desc";
+            }
+            renderAdminDashboard();
+          });
+        });
+
+        if (exportButton) {
+          exportButton.addEventListener("click", () => {
+            exportSectionToPdf("adminBoard", "organization-executive-report.pdf");
+          });
+        }
+
+        if (backButton) {
+          backButton.addEventListener("click", () => {
+            state.view = "landing";
+            render();
+          });
+        }
+      }
+
+      function getFilteredAdminRecords() {
+        let records = [...state.admin.records];
+
+        if (state.admin.departmentFilter !== "all") {
+          records = records.filter((record) => record.department === state.admin.departmentFilter);
+        }
+
+        if (state.admin.startDate) {
+          const start = new Date(`${state.admin.startDate}T00:00:00`);
+          records = records.filter((record) => record.date >= start);
+        }
+
+        if (state.admin.endDate) {
+          const end = new Date(`${state.admin.endDate}T23:59:59`);
+          records = records.filter((record) => record.date <= end);
+        }
+
+        return records;
+      }
+
+      function getSortedAdminRecords(records) {
+        const sorted = [...records];
+        const direction = state.admin.sortDirection === "desc" ? -1 : 1;
+
+        sorted.sort((a, b) => {
+          const key = state.admin.sortKey;
+
+          if (key === "department") return a.department.localeCompare(b.department) * direction;
+          if (key === "respondent") return a.respondentName.localeCompare(b.respondentName) * direction;
+          if (key === "date") return (a.date - b.date) * direction;
+          if (key === "stage") return a.stage.localeCompare(b.stage) * direction;
+          return (a.finalScore - b.finalScore) * direction;
+        });
+
+        return sorted;
+      }
+
+      function getDepartmentAggregates(records) {
+        const groups = new Map();
+
+        records.forEach((record) => {
+          if (!groups.has(record.department)) {
+            groups.set(record.department, []);
+          }
+          groups.get(record.department).push(record);
+        });
+
+        return Array.from(groups.entries()).map(([department, entries]) => {
+          const pillars = assessmentData.map((pillar) => {
+            const average =
+              entries.reduce((sum, entry) => {
+                const match = entry.pillars.find((item) => item.name === pillar.name);
+                return sum + (match ? match.average : 0);
+              }, 0) / entries.length;
+
+            return {
+              name: pillar.name,
+              average
+            };
+          });
+
+          return {
+            department,
+            pillars,
+            finalScore: entries.reduce((sum, entry) => sum + entry.finalScore, 0) / entries.length
+          };
+        });
+      }
+
+      function renderAdminCompareChart(departmentAggregates, compareDepartments) {
+        const canvas = document.getElementById("adminRadarChart");
+        if (!canvas) return;
+
+        if (state.adminChart) {
+          state.adminChart.destroy();
+        }
+
+        const palette = [
+          { border: "rgba(0, 155, 216, 1)", fill: "rgba(0, 155, 216, 0.16)" },
+          { border: "rgba(201, 49, 154, 1)", fill: "rgba(201, 49, 154, 0.16)" },
+          { border: "rgba(0, 211, 180, 1)", fill: "rgba(0, 211, 180, 0.16)" }
+        ];
+
+        const datasets = compareDepartments
+          .map((department, index) => {
+            const aggregate = departmentAggregates.find((item) => item.department === department);
+            if (!aggregate) return null;
+            const color = palette[index % palette.length];
+            return {
+              label: department,
+              data: aggregate.pillars.map((pillar) => pillar.average.toFixed(2)),
+              backgroundColor: color.fill,
+              borderColor: color.border,
+              borderWidth: 2.5,
+              pointBackgroundColor: color.border,
+              pointBorderColor: "#ffffff",
+              pointHoverBackgroundColor: "#ffffff",
+              pointHoverBorderColor: color.border
+            };
+          })
+          .filter(Boolean);
+
+        state.adminChart = new Chart(canvas, {
+          type: "radar",
+          data: {
+            labels: assessmentData.map((pillar) => pillar.name),
+            datasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: {
+                  color: "#334155",
+                  font: {
+                    family: "ui-sans-serif, system-ui, sans-serif",
+                    weight: 600
+                  }
+                }
+              }
+            },
+            scales: {
+              r: {
+                min: 1,
+                max: 5,
+                ticks: {
+                  stepSize: 1,
+                  backdropColor: "transparent",
+                  color: "#64748b"
+                },
+                angleLines: {
+                  color: "rgba(148, 163, 184, 0.35)"
+                },
+                grid: {
+                  color: "rgba(148, 163, 184, 0.35)"
+                },
+                pointLabels: {
+                  color: "#0f172a",
+                  font: {
+                    size: 12,
+                    weight: 600
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function calculateResultsFromLookup(responseLookup) {
         const pillars = assessmentData.map((pillar) => {
-          const values = pillar.questions.map((_, index) => state.responses[`${pillar.id}-${index}`]);
+          const values = pillar.questions.map((_, index) => Number(responseLookup[`${pillar.id}-${index}`] || 0));
           const total = values.reduce((sum, value) => sum + value, 0);
           const average = total / values.length;
           const weightedContribution = average * pillar.weight;
           const isStrong = average >= 3.5;
           const accent = pillarAccentMap[pillar.name];
+          const dimensions = pillar.dimensions.map((dimension) => {
+            const dimensionValues = dimension.indexes.map((index) => Number(responseLookup[`${pillar.id}-${index}`] || 0));
+            const dimensionAverage = dimensionValues.reduce((sum, value) => sum + value, 0) / dimensionValues.length;
+            return {
+              name: dimension.name,
+              average: dimensionAverage,
+              gap: 5 - dimensionAverage
+            };
+          });
 
           return {
+            id: pillar.id,
             name: pillar.name,
             weight: pillar.weight,
             average,
             weightedContribution,
             gap: 5 - average,
             accent,
+            dimensions,
             statusLabel: isStrong ? "Strong" : "Growth Area",
             narrative: isStrong
               ? pillarNarratives[pillar.name].strong
@@ -851,6 +1471,10 @@
           overallComment: overallStageComments[stage],
           pillars
         };
+      }
+
+      function calculateResults() {
+        return calculateResultsFromLookup(state.responses);
       }
 
       function getMaturityStage(score) {
@@ -991,6 +1615,86 @@
           month: "short",
           year: "numeric"
         });
+      }
+
+      function getHeatmapTone(score) {
+        if (score <= 2.0) {
+          return { background: "rgba(229, 21, 46, 0.14)", text: "#E5152E" };
+        }
+        if (score <= 3.0) {
+          return { background: "rgba(252, 170, 40, 0.18)", text: "#B86F00" };
+        }
+        if (score <= 4.0) {
+          return { background: "rgba(0, 155, 216, 0.14)", text: "#009BD8" };
+        }
+        return { background: "rgba(11, 37, 69, 0.92)", text: "#ffffff" };
+      }
+
+      function slugify(value) {
+        return String(value || "")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "");
+      }
+
+      function normalizeAssessmentRecord(id, data) {
+        const responseLookup = {};
+        (data.responses || []).forEach((item) => {
+          responseLookup[`${item.pillarId}-${item.questionIndex}`] = item.value;
+        });
+
+        const computed = calculateResultsFromLookup(responseLookup);
+        const date =
+          data.createdAt && typeof data.createdAt.toDate === "function"
+            ? data.createdAt.toDate()
+            : new Date(data.submittedAtIso || Date.now());
+
+        return {
+          id,
+          department: data.respondent?.department || "Unknown Department",
+          respondentName: data.respondent?.name || "Unknown Respondent",
+          date,
+          finalScore: typeof data.finalScore === "number" ? data.finalScore : computed.finalScore,
+          stage: data.maturityStage || computed.stage,
+          pillars: computed.pillars,
+          responseLookup
+        };
+      }
+
+      async function exportSectionToPdf(sectionId, filename) {
+        const target = document.getElementById(sectionId);
+        if (!target || !window.html2canvas || !window.jspdf) {
+          window.print();
+          return;
+        }
+
+        const canvas = await window.html2canvas(target, {
+          scale: 2,
+          backgroundColor: "#f8fcff"
+        });
+
+        const image = canvas.toDataURL("image/png");
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imageWidth = pageWidth - 12;
+        const imageHeight = (canvas.height * imageWidth) / canvas.width;
+
+        let remainingHeight = imageHeight;
+        let position = 6;
+
+        pdf.addImage(image, "PNG", 6, position, imageWidth, imageHeight);
+        remainingHeight -= pageHeight;
+
+        while (remainingHeight > 0) {
+          position = remainingHeight - imageHeight + 6;
+          pdf.addPage();
+          pdf.addImage(image, "PNG", 6, position, imageWidth, imageHeight);
+          remainingHeight -= pageHeight;
+        }
+
+        pdf.save(filename);
       }
 
       const firebaseConfig = {
