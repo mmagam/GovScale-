@@ -14,26 +14,39 @@
               ink: "#0f172a",
               slate: "#334155",
               mist: "#e2e8f0",
-              fog: "#f8fafc",
-              accent: "#0f766e",
-              accentSoft: "#ccfbf1",
-              gold: "#b45309",
-              navy: "#1e3a5f"
+              fog: "#f8fbff",
+              accent: "#009BD8",
+              accentSoft: "#dff4ff",
+              magenta: "#C9319A",
+              orange: "#FCAA28",
+              red: "#E5152E",
+              teal: "#00D3B4",
+              navy: "#0b2545"
             },
             boxShadow: {
-              glow: "0 24px 80px rgba(15, 23, 42, 0.12)",
-              card: "0 18px 50px rgba(15, 23, 42, 0.10)"
+              glow: "0 24px 80px rgba(0, 155, 216, 0.14)",
+              card: "0 18px 50px rgba(11, 37, 69, 0.10)"
             }
           }
         }
       };
     </script>
     <style>
+      :root {
+        --dubai-blue: #009bd8;
+        --dubai-magenta: #c9319a;
+        --dubai-orange: #fcaa28;
+        --dubai-red: #e5152e;
+        --dubai-teal: #00d3b4;
+        --ink: #0f172a;
+        --navy: #0b2545;
+      }
+
       body {
         background:
-          radial-gradient(circle at top right, rgba(15, 118, 110, 0.14), transparent 24%),
-          radial-gradient(circle at left center, rgba(30, 58, 95, 0.10), transparent 24%),
-          linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+          radial-gradient(circle at top right, rgba(0, 155, 216, 0.16), transparent 26%),
+          radial-gradient(circle at left center, rgba(201, 49, 154, 0.10), transparent 22%),
+          linear-gradient(180deg, #f8fcff 0%, #eef5fb 55%, #f7f8fb 100%);
       }
 
       .glass {
@@ -42,10 +55,10 @@
       }
 
       .likert-option input:checked + span {
-        background: #0f766e;
+        background: var(--dubai-blue);
         color: #ffffff;
-        border-color: #0f766e;
-        box-shadow: 0 10px 24px rgba(15, 118, 110, 0.22);
+        border-color: var(--dubai-blue);
+        box-shadow: 0 10px 24px rgba(0, 155, 216, 0.24);
       }
 
       .progress-fill {
@@ -65,6 +78,54 @@
           opacity: 1;
           transform: translateY(0);
         }
+      }
+
+      .executive-banner {
+        background:
+          linear-gradient(135deg, rgba(0, 155, 216, 0.96), rgba(11, 37, 69, 0.98)),
+          radial-gradient(circle at top right, rgba(252, 170, 40, 0.25), transparent 35%);
+      }
+
+      .metric-chip {
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+
+      .gap-track {
+        background: linear-gradient(90deg, rgba(226, 232, 240, 0.65), rgba(226, 232, 240, 0.95));
+      }
+
+      .gauge {
+        --value: 0;
+        --accent: var(--dubai-blue);
+        background:
+          radial-gradient(closest-side, white 68%, transparent 69% 100%),
+          conic-gradient(
+            from 220deg,
+            var(--accent) calc((var(--value) / 5) * 280deg),
+            rgba(203, 213, 225, 0.5) 0
+          );
+      }
+
+      .gauge::before {
+        content: "";
+        position: absolute;
+        inset: 18%;
+        border-radius: 9999px;
+        background: white;
+      }
+
+      .gauge::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 9999px;
+        background: var(--accent);
+        bottom: 8%;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.95);
       }
     </style>
   </head>
@@ -200,6 +261,72 @@
         { value: 4, label: "Agree" },
         { value: 5, label: "Strongly Agree" }
       ];
+
+      const overallStageComments = {
+        Traditional:
+          "Every exponential journey begins with a single bold step. Your organization has the foundational building blocks in place, and that is a position of immense potential. By committing to a Massive Transformative Purpose and embracing the power of technology and community, your entity can leapfrog traditional stages entirely. The future belongs to those who start building it today.",
+        Emerging:
+          "Your organization has already broken away from the traditional mold. You are in the 'digitizing' phase, where the seeds of exponential growth are being planted. The key principle of Exponential Organizations is that you do not need to own everything; you need to connect to everything. Focus on opening your platforms, engaging your community, and letting data guide your decisions.",
+        Advanced:
+          "This is where momentum becomes unstoppable. Your organization is operating with the agility, data fluency, and innovation culture that define the world's most admired institutions. At this stage, the exponential playbook calls for deepening autonomy within your teams, scaling through algorithms, and becoming a platform that others build upon. Continue pushing boundaries.",
+        Exponential:
+          "Exceptional. Your organization is not just future-ready; it is future-defining. You embody the core principles of an Exponential Organization: a purpose that inspires, technology that scales, and a culture that experiments fearlessly. At this level, your role shifts from transformation to leadership. Share your playbook and continue to push the frontier."
+      };
+
+      const pillarNarratives = {
+        "Purpose & Alignment": {
+          strong:
+            "Your organization's purpose is not just a statement; it is a living force that aligns every decision. A clear MTP (Massive Transformative Purpose) attracts the best talent and the deepest public trust. You have mastered the most important pillar.",
+          weak:
+            "This is your highest-leverage opportunity. Defining and embedding a powerful purpose is the single most impactful action you can take. It costs nothing but changes everything. Start here, and every other pillar will accelerate."
+        },
+        "Agility & Scaling": {
+          strong:
+            "Your ability to scale without proportionally scaling costs is the hallmark of an exponential entity. By leveraging external talent, community intelligence, and smart automation, you are achieving more with less. Continue to push these boundaries.",
+          weak:
+            "The greatest unlock for any government entity is learning to scale impact without scaling bureaucracy. By embracing flexible talent models and intelligent automation, you can achieve 10x results with your current resources."
+        },
+        "Internal Ops & Innovation": {
+          strong:
+            "A culture that experiments, empowers its teams, and makes decisions with real-time data cannot be outpaced. Your internal operations reflect the IDEAS framework at a high level. This is the engine room of exponential growth.",
+          weak:
+            "Innovation is not about having the best ideas; it is about having the fastest learning cycles. By empowering frontline teams and creating safe spaces for experimentation, your organization can dramatically accelerate its ability to adapt."
+        },
+        "National Alignment": {
+          strong:
+            "Your strategic alignment with the national vision is exemplary. You are not merely complying with national directives; you are actively driving them. This positions your entity as a cornerstone of national progress.",
+          weak:
+            "Strengthening your connection to the national vision is a massive multiplier. Entities that explicitly link their roadmap to national KPIs receive greater support and deeper cross-government partnerships."
+        },
+        "Data Ecosystem": {
+          strong:
+            "Your organization is using data not just to report on the past, but to predict and shape the future. This predictive, ecosystem-connected approach is what makes government services truly intelligent.",
+          weak:
+            "Data is the most underutilized asset in government. By investing in data sharing and predictive analytics, your entity can move from reactive service delivery to proactive citizen engagement."
+        },
+        "Digital Platform": {
+          strong:
+            "You are evolving from a service provider into a platform. By enabling third parties to build on your ecosystem, you multiply your impact exponentially without multiplying your costs.",
+          weak:
+            "The shift from service provider to platform is highly transformative. By opening your ecosystem to external developers, you create a flywheel of innovation where others build value on top of your foundation."
+        },
+        "Future Foresight": {
+          strong:
+            "Organizations that invest in foresight do not just survive disruption; they lead it. Your structured approach to trend-spotting ensures that your entity will remain relevant and pioneering for decades to come.",
+          weak:
+            "In a world of accelerating change, the organizations that thrive are those that invest in seeing around corners. Establishing a structured foresight capability ensures your entity is never caught off guard."
+        }
+      };
+
+      const pillarAccentMap = {
+        "Purpose & Alignment": "#009BD8",
+        "Agility & Scaling": "#C9319A",
+        "Internal Ops & Innovation": "#FCAA28",
+        "National Alignment": "#E5152E",
+        "Data Ecosystem": "#00D3B4",
+        "Digital Platform": "#009BD8",
+        "Future Foresight": "#C9319A"
+      };
 
       const state = {
         view: "landing",
@@ -501,81 +628,97 @@
 
         app.innerHTML = `
           <section class="fade-in grid gap-6">
-            <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-              <section class="glass rounded-[28px] border border-white/70 p-8 shadow-card">
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">View 3</p>
-                    <h2 class="mt-2 text-3xl font-semibold tracking-tight text-ink">Results Dashboard</h2>
-                    <p class="mt-3 text-sm leading-7 text-slate">
-                      Weighted organizational maturity results for ${escapeHtml(state.user.name)} from ${escapeHtml(state.user.department)}.
-                    </p>
-                  </div>
-                  <div class="rounded-[24px] border ${stageTone.border} ${stageTone.bg} px-5 py-4">
-                    <div class="text-xs font-semibold uppercase tracking-[0.18em] ${stageTone.text}">Maturity Stage</div>
-                    <div class="mt-2 text-2xl font-semibold ${stageTone.text}">${results.stage}</div>
-                  </div>
-                </div>
-
-                <div class="mt-8 grid gap-4 sm:grid-cols-3">
-                  <div class="rounded-[24px] bg-fog p-5">
-                    <div class="text-sm text-slate">Overall Score</div>
-                    <div class="mt-2 text-4xl font-semibold text-ink">${results.finalScore.toFixed(2)}</div>
-                    <div class="mt-2 text-xs uppercase tracking-[0.16em] text-slate">Out of 5.0</div>
-                  </div>
-                  <div class="rounded-[24px] bg-fog p-5">
-                    <div class="text-sm text-slate">Respondent</div>
-                    <div class="mt-2 text-lg font-semibold text-ink">${escapeHtml(state.user.name)}</div>
-                    <div class="mt-2 text-sm text-slate">${escapeHtml(state.user.department)}</div>
-                  </div>
-                  <div class="rounded-[24px] bg-fog p-5">
-                    <div class="text-sm text-slate">Assessment Date</div>
-                    <div class="mt-2 text-lg font-semibold text-ink">${formatDate(new Date())}</div>
-                    <div class="mt-2 text-sm text-slate">Prototype session</div>
+            <section class="executive-banner overflow-hidden rounded-[32px] p-8 text-white shadow-glow lg:p-10">
+              <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+                <div class="max-w-3xl">
+                  <p class="text-sm font-semibold uppercase tracking-[0.24em] text-white/80">Executive Summary Board</p>
+                  <h2 class="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                    Organizational maturity snapshot for ${escapeHtml(state.user.department)}
+                  </h2>
+                  <p class="mt-4 max-w-2xl text-sm leading-7 text-white/82 sm:text-base">
+                    Weighted organizational maturity results for ${escapeHtml(state.user.name)}. This board highlights current performance, capability gaps, and executive commentary across the seven strategic pillars.
+                  </p>
+                  <div class="mt-6 flex flex-wrap gap-3">
+                    <div class="metric-chip rounded-2xl px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.18em] text-white/70">Overall Score</div>
+                      <div class="mt-2 text-4xl font-semibold">${results.finalScore.toFixed(1)} <span class="text-xl font-medium text-white/70">/ 5.0</span></div>
+                    </div>
+                    <div class="metric-chip rounded-2xl px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.18em] text-white/70">Maturity Stage</div>
+                      <div class="mt-2 text-2xl font-semibold">${results.stage}</div>
+                    </div>
+                    <div class="metric-chip rounded-2xl px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.18em] text-white/70">Assessment Date</div>
+                      <div class="mt-2 text-lg font-semibold">${formatDate(new Date())}</div>
+                    </div>
                   </div>
                 </div>
-
-                <div class="mt-8 rounded-[28px] bg-white p-5">
-                  <canvas id="radarChart" height="320"></canvas>
-                </div>
-              </section>
-
-              <section class="glass rounded-[28px] border border-white/70 p-8 shadow-card">
-                <div class="flex items-center justify-between gap-4">
-                  <div>
-                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Pillar Breakdown</p>
-                    <h3 class="mt-2 text-2xl font-semibold text-ink">Weighted Scorecard</h3>
-                  </div>
-                  <button
-                    id="printButton"
-                    class="inline-flex items-center justify-center rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                <div class="max-w-xl rounded-[28px] bg-white/10 p-6 backdrop-blur">
+                  <div
+                    class="inline-flex rounded-full border border-white/20 bg-white/12 px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em]"
+                    style="color:${stageTone.textColor}; background:${stageTone.bgColor}; border-color:${stageTone.borderColor}"
                   >
-                    Export PDF
-                  </button>
+                    ${results.stage}
+                  </div>
+                  <p class="mt-4 text-sm leading-7 text-white/86">${results.overallComment}</p>
+                  <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                    <div class="rounded-2xl bg-white/12 px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.16em] text-white/70">Respondent</div>
+                      <div class="mt-2 text-lg font-semibold">${escapeHtml(state.user.name)}</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/12 px-4 py-3">
+                      <div class="text-xs uppercase tracking-[0.16em] text-white/70">Report Type</div>
+                      <div class="mt-2 text-lg font-semibold">City of Dubai Executive Board</div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+            </section>
 
+            <section class="grid gap-6 lg:grid-cols-2">
+              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+                <div class="flex items-end justify-between gap-4">
+                  <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Section B</p>
+                    <h3 class="mt-2 text-2xl font-semibold text-ink">Visual Overview</h3>
+                  </div>
+                  <div class="rounded-2xl bg-accentSoft px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                    Radar Chart
+                  </div>
+                </div>
+                <div class="mt-6 rounded-[28px] bg-white p-5">
+                  <canvas id="radarChart" height="340"></canvas>
+                </div>
+              </div>
+
+              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+                <div class="flex items-end justify-between gap-4">
+                  <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Section B</p>
+                    <h3 class="mt-2 text-2xl font-semibold text-ink">Gap Analysis</h3>
+                  </div>
+                  <div class="rounded-2xl bg-[#edf7fd] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
+                    Gap to 5.0
+                  </div>
+                </div>
                 <div class="mt-6 space-y-4">
                   ${results.pillars
                     .map(
-                      (pillar, index) => `
+                      (pillar) => `
                         <div class="rounded-[24px] border border-slate-200 bg-white p-5">
-                          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div class="flex items-center justify-between gap-4">
                             <div>
-                              <div class="text-sm font-semibold text-ink">${index + 1}. ${escapeHtml(pillar.name)}</div>
-                              <div class="mt-1 text-xs uppercase tracking-[0.16em] text-slate">Weight ${(pillar.weight * 100).toFixed(0)}%</div>
+                              <div class="text-sm font-semibold text-ink">${escapeHtml(pillar.name)}</div>
+                              <div class="mt-1 text-xs uppercase tracking-[0.16em] text-slate">Score ${pillar.average.toFixed(1)} / 5.0</div>
                             </div>
-                            <div class="text-right">
-                              <div class="text-sm text-slate">Pillar Average</div>
-                              <div class="text-2xl font-semibold text-ink">${pillar.average.toFixed(2)}</div>
-                            </div>
+                            <div class="text-sm font-semibold" style="color:${pillar.accent}">${pillar.gap.toFixed(1)} gap</div>
                           </div>
                           <div class="mt-4">
-                            <div class="mb-2 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-slate">
-                              <span>Weighted Contribution</span>
-                              <span>${pillar.weightedContribution.toFixed(2)}</span>
-                            </div>
-                            <div class="h-3 overflow-hidden rounded-full bg-slate-200">
-                              <div class="h-full rounded-full bg-gradient-to-r from-accent to-navy" style="width:${(pillar.average / 5) * 100}%"></div>
+                            <div class="gap-track h-4 overflow-hidden rounded-full">
+                              <div class="flex h-full overflow-hidden rounded-full">
+                                <div style="width:${(pillar.average / 5) * 100}%; background:${pillar.accent}"></div>
+                                <div style="width:${(pillar.gap / 5) * 100}%; background:rgba(203, 213, 225, 0.45)"></div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -583,21 +726,65 @@
                     )
                     .join("")}
                 </div>
+              </div>
+            </section>
 
-                <div class="mt-6 rounded-[24px] bg-fog p-5 text-sm leading-7 text-slate">
-                  <strong class="text-ink">Scoring logic:</strong> Each pillar average is calculated from its question responses on a 1-5 scale. The final score is the sum of each pillar average multiplied by its configured weight.
+            <section class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Section C</p>
+                  <h3 class="mt-2 text-2xl font-semibold text-ink">Pillar-by-Pillar Narrative Breakdown</h3>
                 </div>
-
-                <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                <div class="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    id="printButton"
+                    class="inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                  >
+                    Export PDF
+                  </button>
                   <button
                     id="restartButton"
-                    class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-slate-400 hover:text-ink"
+                    class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-accent hover:text-accent"
                   >
                     Restart Assessment
                   </button>
                 </div>
-              </section>
-            </div>
+              </div>
+
+              <div class="mt-8 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+                ${results.pillars
+                  .map(
+                    (pillar) => `
+                      <article class="rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm">
+                        <div class="flex items-start justify-between gap-4">
+                          <div>
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em]" style="color:${pillar.accent}">
+                              ${pillar.statusLabel}
+                            </p>
+                            <h4 class="mt-2 text-xl font-semibold text-ink">${escapeHtml(pillar.name)}</h4>
+                            <p class="mt-2 text-sm text-slate">${pillar.average.toFixed(1)} / 5.0</p>
+                          </div>
+                          <div class="relative gauge h-24 w-24 rounded-full" style="--value:${pillar.average}; --accent:${pillar.accent}">
+                            <div class="absolute inset-0 flex items-center justify-center text-lg font-semibold text-ink">${pillar.average.toFixed(1)}</div>
+                          </div>
+                        </div>
+                        <div class="mt-5 rounded-[24px] p-4 text-sm leading-7" style="background:${pillar.cardBackground}; color:#244154">
+                          ${pillar.narrative}
+                        </div>
+                        <div class="mt-4 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-slate">
+                          <span>Weight ${(pillar.weight * 100).toFixed(0)}%</span>
+                          <span>Contribution ${pillar.weightedContribution.toFixed(2)}</span>
+                        </div>
+                      </article>
+                    `
+                  )
+                  .join("")}
+              </div>
+
+              <div class="mt-8 rounded-[28px] bg-[#f4faff] p-5 text-sm leading-7 text-slate">
+                <strong class="text-ink">Scoring logic:</strong> Each pillar average is calculated from its question responses on a 1-5 scale. The final score is the sum of each pillar average multiplied by its configured weight.
+              </div>
+            </section>
           </section>
         `;
 
@@ -626,60 +813,71 @@
           const total = values.reduce((sum, value) => sum + value, 0);
           const average = total / values.length;
           const weightedContribution = average * pillar.weight;
+          const isStrong = average >= 3.5;
+          const accent = pillarAccentMap[pillar.name];
 
           return {
             name: pillar.name,
             weight: pillar.weight,
             average,
-            weightedContribution
+            weightedContribution,
+            gap: 5 - average,
+            accent,
+            statusLabel: isStrong ? "Strong" : "Growth Area",
+            narrative: isStrong
+              ? pillarNarratives[pillar.name].strong
+              : pillarNarratives[pillar.name].weak,
+            cardBackground: isStrong ? "rgba(0, 211, 180, 0.10)" : "rgba(252, 170, 40, 0.12)"
           };
         });
 
         const finalScore = pillars.reduce((sum, pillar) => sum + pillar.weightedContribution, 0);
+        const stage = getMaturityStage(finalScore);
 
         return {
           finalScore,
-          stage: getMaturityStage(finalScore),
+          stage,
+          overallComment: overallStageComments[stage],
           pillars
         };
       }
 
       function getMaturityStage(score) {
-        if (score <= 2.0) return "Traditional / Foundational";
-        if (score <= 3.0) return "Emerging / Digitizing";
-        if (score <= 4.0) return "Advanced / Connected";
-        return "Exponential / Future-Ready";
+        if (score <= 2.0) return "Traditional";
+        if (score <= 3.0) return "Emerging";
+        if (score <= 4.0) return "Advanced";
+        return "Exponential";
       }
 
       function getStageTone(stage) {
-        if (stage === "Traditional / Foundational") {
+        if (stage === "Traditional") {
           return {
-            bg: "bg-amber-50",
-            border: "border-amber-200",
-            text: "text-amber-700"
+            bgColor: "rgba(252, 170, 40, 0.16)",
+            borderColor: "rgba(252, 170, 40, 0.4)",
+            textColor: "#FCAA28"
           };
         }
 
-        if (stage === "Emerging / Digitizing") {
+        if (stage === "Emerging") {
           return {
-            bg: "bg-sky-50",
-            border: "border-sky-200",
-            text: "text-sky-700"
+            bgColor: "rgba(201, 49, 154, 0.16)",
+            borderColor: "rgba(201, 49, 154, 0.38)",
+            textColor: "#C9319A"
           };
         }
 
-        if (stage === "Advanced / Connected") {
+        if (stage === "Advanced") {
           return {
-            bg: "bg-emerald-50",
-            border: "border-emerald-200",
-            text: "text-emerald-700"
+            bgColor: "rgba(0, 211, 180, 0.16)",
+            borderColor: "rgba(0, 211, 180, 0.38)",
+            textColor: "#00D3B4"
           };
         }
 
         return {
-          bg: "bg-purple-50",
-          border: "border-purple-200",
-          text: "text-purple-700"
+          bgColor: "rgba(0, 155, 216, 0.16)",
+          borderColor: "rgba(0, 155, 216, 0.38)",
+          textColor: "#009BD8"
         };
       }
 
@@ -697,13 +895,13 @@
               {
                 label: "Pillar Average",
                 data: results.pillars.map((pillar) => pillar.average.toFixed(2)),
-                backgroundColor: "rgba(15, 118, 110, 0.18)",
-                borderColor: "rgba(15, 118, 110, 1)",
+                backgroundColor: "rgba(0, 155, 216, 0.22)",
+                borderColor: "rgba(0, 155, 216, 1)",
                 borderWidth: 2.5,
-                pointBackgroundColor: "rgba(15, 118, 110, 1)",
+                pointBackgroundColor: "rgba(0, 155, 216, 1)",
                 pointBorderColor: "#ffffff",
                 pointHoverBackgroundColor: "#ffffff",
-                pointHoverBorderColor: "rgba(15, 118, 110, 1)"
+                pointHoverBorderColor: "rgba(0, 155, 216, 1)"
               }
             ]
           },
