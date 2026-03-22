@@ -6,6 +6,8 @@
     <title>GovScale: Exponential Maturity Assessment Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore-compat.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -336,7 +338,9 @@
           department: ""
         },
         responses: {},
-        chart: null
+        chart: null,
+        saveStatus: "",
+        savedAssessmentKey: null
       };
 
       const app = document.getElementById("app");
@@ -671,6 +675,9 @@
                       <div class="mt-2 text-lg font-semibold">City of Dubai Executive Board</div>
                     </div>
                   </div>
+                  <div id="saveStatus" class="mt-4 rounded-2xl border border-white/15 bg-white/8 px-4 py-3 text-xs font-medium leading-6 text-white/82">
+                    ${escapeHtml(state.saveStatus || "Assessment persistence is ready. Results will save to Firestore after the scorecard renders.")}
+                  </div>
                 </div>
               </div>
             </section>
@@ -789,11 +796,15 @@
         `;
 
         renderChart(results);
+        updateSaveStatus();
+        persistAssessment(results);
 
         document.getElementById("restartButton").addEventListener("click", () => {
           state.view = "landing";
           state.currentPillarIndex = 0;
           state.responses = {};
+          state.saveStatus = "";
+          state.savedAssessmentKey = null;
           if (state.chart) {
             state.chart.destroy();
             state.chart = null;
@@ -980,6 +991,102 @@
           month: "short",
           year: "numeric"
         });
+      }
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyD3vU_ImbZ4WdE02l75c7G12YnLdFrJwFE",
+        authDomain: "govscale-c79a5.firebaseapp.com",
+        projectId: "govscale-c79a5",
+        storageBucket: "govscale-c79a5.firebasestorage.app",
+        messagingSenderId: "830364644051",
+        appId: "1:830364644051:web:a5e446cf559742084a9a26",
+        measurementId: "G-P9JT6VCM8K"
+      };
+
+      let firestoreDb = null;
+
+      try {
+        if (window.firebase) {
+          if (!window.firebase.apps.length) {
+            window.firebase.initializeApp(firebaseConfig);
+          }
+          firestoreDb = window.firebase.firestore();
+        }
+      } catch (error) {
+        console.error("Firebase initialization failed:", error);
+      }
+
+      function updateSaveStatus() {
+        const saveStatusElement = document.getElementById("saveStatus");
+        if (saveStatusElement) {
+          saveStatusElement.textContent =
+            state.saveStatus ||
+            "Assessment persistence is ready. Results will save to Firestore after the scorecard renders.";
+        }
+      }
+
+      async function persistAssessment(results) {
+        const assessmentKey = JSON.stringify({
+          name: state.user.name,
+          department: state.user.department,
+          responses: state.responses
+        });
+
+        if (state.savedAssessmentKey === assessmentKey) {
+          return;
+        }
+
+        if (!firestoreDb) {
+          state.saveStatus = "Firebase is not connected yet. Results are visible locally, but this run was not stored in Firestore.";
+          updateSaveStatus();
+          return;
+        }
+
+        state.saveStatus = "Saving this assessment to Firestore...";
+        updateSaveStatus();
+
+        const submittedAt = new Date();
+        const responses = assessmentData.flatMap((pillar) =>
+          pillar.questions.map((question, index) => ({
+            pillarId: pillar.id,
+            pillarName: pillar.name,
+            questionIndex: index,
+            question,
+            value: state.responses[`${pillar.id}-${index}`]
+          }))
+        );
+
+        try {
+          const docRef = await firestoreDb.collection("assessments").add({
+            respondent: {
+              name: state.user.name,
+              department: state.user.department
+            },
+            finalScore: Number(results.finalScore.toFixed(2)),
+            maturityStage: results.stage,
+            overallComment: results.overallComment,
+            pillars: results.pillars.map((pillar) => ({
+              name: pillar.name,
+              weight: pillar.weight,
+              average: Number(pillar.average.toFixed(2)),
+              weightedContribution: Number(pillar.weightedContribution.toFixed(2)),
+              gap: Number(pillar.gap.toFixed(2)),
+              statusLabel: pillar.statusLabel,
+              narrative: pillar.narrative
+            })),
+            responses,
+            submittedAtIso: submittedAt.toISOString(),
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          state.savedAssessmentKey = assessmentKey;
+          state.saveStatus = `Saved to Firestore successfully. Record ID: ${docRef.id}`;
+          updateSaveStatus();
+        } catch (error) {
+          console.error("Failed to save assessment:", error);
+          state.saveStatus = "Firestore save failed. Check your browser console and Firebase rules, then try again.";
+          updateSaveStatus();
+        }
       }
 
       render();
