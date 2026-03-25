@@ -164,7 +164,7 @@
             <div class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
             <div class="rounded-2xl bg-white/10 px-4 py-3">
               <div class="text-slate-200">Questions</div>
-              <div class="mt-1 text-2xl font-semibold">34</div>
+              <div class="mt-1 text-2xl font-semibold">37</div>
             </div>
             <div class="rounded-2xl bg-white/10 px-4 py-3">
               <div class="text-slate-200">Pillars</div>
@@ -1619,15 +1619,15 @@
 
       function getHeatmapTone(score) {
         if (score <= 2.0) {
-          return { background: "rgba(229, 21, 46, 0.14)", text: "#E5152E" };
+          return { background: "#E5152E", text: "#ffffff" };
         }
         if (score <= 3.0) {
-          return { background: "rgba(252, 170, 40, 0.18)", text: "#B86F00" };
+          return { background: "#FCAA28", text: "#0f172a" };
         }
         if (score <= 4.0) {
-          return { background: "rgba(0, 155, 216, 0.14)", text: "#009BD8" };
+          return { background: "#00D3B4", text: "#0f172a" };
         }
-        return { background: "rgba(11, 37, 69, 0.92)", text: "#ffffff" };
+        return { background: "#009BD8", text: "#ffffff" };
       }
 
       function slugify(value) {
