@@ -49,10 +49,19 @@
 
       body {
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .page-bg-light {
+        background: linear-gradient(180deg, #f8fcff 0%, #eef5fb 55%, #f7f8fb 100%);
+      }
+
+      .page-bg-skyline {
         background:
-          radial-gradient(circle at top right, rgba(0, 155, 216, 0.16), transparent 26%),
-          radial-gradient(circle at left center, rgba(201, 49, 154, 0.10), transparent 22%),
-          linear-gradient(180deg, #f8fcff 0%, #eef5fb 55%, #f7f8fb 100%);
+          linear-gradient(180deg, rgba(10, 22, 40, 0.85) 0%, rgba(10, 22, 40, 0.65) 100%),
+          url("https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=2000&q=80");
+        background-position: center;
+        background-size: cover;
+        background-attachment: fixed;
       }
 
       .skyline-hero {
@@ -212,59 +221,38 @@
       }
     </style>
   </head>
-  <body class="min-h-screen text-ink">
+  <body class="min-h-screen page-bg-light text-ink">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <header class="no-print mb-6 flex flex-col gap-4 rounded-[28px] bg-ink px-6 py-6 text-white shadow-glow sm:px-8">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div class="mb-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-100">
-              GovScale
-            </div>
-            <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Exponential Maturity Assessment</h1>
-            <p class="mt-3 max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
-              A stakeholder-ready diagnostic prototype for government entities to assess organizational maturity, calculate a weighted score, and generate an executive scorecard instantly.
-            </p>
+      <header class="no-print sticky top-0 z-50 flex w-full items-center justify-between bg-ink px-6 py-4 text-white shadow-md sm:px-8">
+        <div class="flex items-center gap-4">
+          <div class="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-100">
+            GOVSCALE
           </div>
-          <div class="flex flex-col gap-4 lg:items-end">
-            <div class="flex flex-wrap gap-3">
-              <button
-                id="assessmentNavButton"
-                class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
-              >
-                Assessment
-              </button>
-              <button
-                id="adminNavButton"
-                class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
-              >
-                Admin Dashboard
-              </button>
-              <button
-                id="logoutButton"
-                class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
-              >
-                Logout
-              </button>
-            </div>
-            <div class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-200">Questions</div>
-              <div class="mt-1 text-2xl font-semibold">37</div>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3">
-              <div class="text-slate-200">Pillars</div>
-              <div class="mt-1 text-2xl font-semibold">7</div>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3 col-span-2 sm:col-span-1">
-              <div class="text-slate-200">Scale</div>
-              <div class="mt-1 text-2xl font-semibold">1-5</div>
-            </div>
-            </div>
-            <div class="rounded-2xl bg-white/10 px-4 py-3 text-sm text-slate-100">
-              <div class="text-slate-200">Signed in as</div>
-              <div id="authEmailLabel" class="mt-1 truncate text-base font-semibold">Not signed in</div>
-            </div>
+          <h1 class="text-lg font-semibold tracking-tight sm:text-xl">Exponential Maturity Assessment</h1>
+        </div>
+        <div class="flex items-center gap-3 sm:gap-4">
+          <button
+            id="assessmentNavButton"
+            class="inline-flex items-center justify-center rounded-full border border-white/20 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
+          >
+            Assessment
+          </button>
+          <button
+            id="adminNavButton"
+            class="inline-flex items-center justify-center rounded-full border border-white/20 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
+          >
+            Admin Dashboard
+          </button>
+          <div class="hidden text-right text-xs text-slate-300 sm:block">
+            <div>Signed in as</div>
+            <div id="authEmailLabel" class="mt-1 max-w-[220px] truncate text-sm font-semibold text-white">Sign In</div>
           </div>
+          <button
+            id="logoutButton"
+            class="inline-flex items-center justify-center rounded-full border border-white/20 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
+          >
+            Logout
+          </button>
         </div>
       </header>
 
@@ -491,6 +479,9 @@
       const app = document.getElementById("app");
 
       function render() {
+        const skylineViews = state.view === "login" || state.view === "landing";
+        document.body.classList.toggle("page-bg-skyline", skylineViews);
+        document.body.classList.toggle("page-bg-light", !skylineViews);
         bindGlobalNav();
         if (state.auth.loading) {
           renderLoadingState();
@@ -532,7 +523,7 @@
         }
 
         if (authEmailLabel) {
-          authEmailLabel.textContent = state.auth.email || "Not signed in";
+          authEmailLabel.textContent = state.auth.email || "Sign In";
         }
 
         if (assessmentButton && !assessmentButton.dataset.bound) {
@@ -599,8 +590,8 @@
 
       function renderLogin() {
         app.innerHTML = `
-          <section class="fade-in-up mx-auto flex min-h-[68vh] w-full max-w-4xl items-center justify-center px-4 sm:px-6">
-            <div class="glass card-surface w-full max-w-xl rounded-[32px] border border-white/70 p-8 sm:p-10">
+          <section class="fade-in-up mx-auto flex min-h-[78vh] w-full max-w-4xl items-center justify-center px-4 sm:px-6">
+            <div class="card-surface w-full max-w-xl rounded-[32px] border border-white/60 bg-white/90 p-8 shadow-2xl backdrop-blur-xl sm:p-10">
               <div class="text-center">
                 <div class="mx-auto inline-flex rounded-full bg-accentSoft px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-accent">GovScale</div>
                 <h2 class="mt-5 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Secure Government Access</h2>
@@ -677,8 +668,8 @@
       function renderLanding() {
         app.innerHTML = `
           <section class="fade-in-up mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 md:flex-row">
-            <div class="skyline-hero card-surface rounded-[28px] p-6 text-white sm:p-8 md:w-[52%]">
-              <div class="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em]">
+            <div class="glass card-surface rounded-[28px] border border-white/20 bg-white/10 p-6 text-white shadow-2xl backdrop-blur-md sm:p-8 md:w-[52%]">
+              <div class="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-white">
                 Government Readiness Diagnostic
               </div>
               <h2 class="mt-5 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -689,34 +680,34 @@
               </p>
               <div class="mt-8 grid gap-4 sm:grid-cols-3">
                 <div class="rounded-2xl bg-white/10 p-4">
-                  <div class="text-sm text-slate-200">Assessment Time</div>
-                  <div class="mt-2 text-xl font-semibold">8-12 min</div>
+                  <div class="text-sm text-slate-200">Questions</div>
+                  <div class="mt-2 text-xl font-semibold">37</div>
                 </div>
                 <div class="rounded-2xl bg-white/10 p-4">
-                  <div class="text-sm text-slate-200">Output</div>
-                  <div class="mt-2 text-xl font-semibold">Radar Scorecard</div>
+                  <div class="text-sm text-slate-200">Pillars</div>
+                  <div class="mt-2 text-xl font-semibold">7</div>
                 </div>
                 <div class="rounded-2xl bg-white/10 p-4">
-                  <div class="text-sm text-slate-200">Scoring</div>
-                  <div class="mt-2 text-xl font-semibold">Weighted 1-5</div>
+                  <div class="text-sm text-slate-200">Scale</div>
+                  <div class="mt-2 text-xl font-semibold">1-5</div>
                 </div>
               </div>
             </div>
 
-            <div class="glass card-surface rounded-[28px] border border-white/70 p-6 sm:p-8 md:w-[48%]">
+            <div class="glass card-surface rounded-[28px] border border-white/20 bg-white/10 p-6 text-white shadow-2xl backdrop-blur-md sm:p-8 md:w-[48%]">
               <div class="mb-6">
-                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">
+                <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-200">
                   View 1
                 </p>
-                <h3 class="mt-2 text-2xl font-semibold text-ink">Start Assessment</h3>
-                <p class="mt-3 text-sm leading-7 text-slate">
+                <h3 class="mt-2 text-2xl font-semibold text-white">Start Assessment</h3>
+                <p class="mt-3 text-sm leading-7 text-slate-200">
                   Enter your details to launch the diagnostic. These details will appear on the final scorecard.
                 </p>
               </div>
 
               <form id="intakeForm" class="space-y-5">
                 <div>
-                  <label for="userName" class="mb-2 block text-sm font-medium text-slate">User Name</label>
+                  <label for="userName" class="mb-2 block text-sm font-medium text-slate-100">User Name</label>
                   <input
                     id="userName"
                     name="userName"
@@ -727,7 +718,7 @@
                   />
                 </div>
                 <div>
-                  <label for="department" class="mb-2 block text-sm font-medium text-slate">Government Department</label>
+                  <label for="department" class="mb-2 block text-sm font-medium text-slate-100">Government Department</label>
                   <input
                     id="department"
                     name="department"
@@ -737,7 +728,7 @@
                     value="${escapeHtml(state.user.department)}"
                   />
                 </div>
-                <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-fog px-4 py-4 text-sm leading-6 text-slate">
+                <label class="flex items-start gap-3 rounded-2xl border border-white/20 bg-white/10 px-4 py-4 text-sm leading-6 text-slate-200">
                   <input
                     id="consentCheckbox"
                     name="consentCheckbox"
