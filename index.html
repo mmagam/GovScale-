@@ -9,6 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore-compat.js"></script>
     <script>
       tailwind.config = {
@@ -47,10 +48,20 @@
       }
 
       body {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         background:
           radial-gradient(circle at top right, rgba(0, 155, 216, 0.16), transparent 26%),
           radial-gradient(circle at left center, rgba(201, 49, 154, 0.10), transparent 22%),
           linear-gradient(180deg, #f8fcff 0%, #eef5fb 55%, #f7f8fb 100%);
+      }
+
+      .skyline-hero {
+        background:
+          linear-gradient(135deg, rgba(11, 37, 69, 0.86), rgba(11, 37, 69, 0.66)),
+          linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(11, 37, 69, 0.55)),
+          url("https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=80");
+        background-position: center;
+        background-size: cover;
       }
 
       .glass {
@@ -73,10 +84,25 @@
         animation: fadeIn 240ms ease;
       }
 
+      .fade-in-up {
+        animation: fadeInUp 320ms ease both;
+      }
+
       @keyframes fadeIn {
         from {
           opacity: 0;
           transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
         }
         to {
           opacity: 1;
@@ -131,11 +157,64 @@
         transform: translateX(-50%);
         box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.95);
       }
+
+      .card-surface {
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+        transition: box-shadow 200ms ease, transform 200ms ease;
+      }
+
+      .card-surface:hover {
+        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
+      }
+
+      .avoid-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      @media print {
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        body {
+          background: #ffffff !important;
+        }
+
+        header,
+        .no-print {
+          display: none !important;
+        }
+
+        .print-stack {
+          display: block !important;
+        }
+
+        .print-stack > * {
+          width: 100% !important;
+          max-width: none !important;
+          margin-bottom: 18px !important;
+        }
+
+        .print-narrative-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .print-chart-box {
+          min-height: 360px !important;
+        }
+
+        .avoid-break {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+        }
+      }
     </style>
   </head>
   <body class="min-h-screen text-ink">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-      <header class="mb-6 flex flex-col gap-4 rounded-[28px] bg-ink px-6 py-6 text-white shadow-glow sm:px-8">
+      <header class="no-print mb-6 flex flex-col gap-4 rounded-[28px] bg-ink px-6 py-6 text-white shadow-glow sm:px-8">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div class="mb-3 inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-100">
@@ -160,6 +239,12 @@
               >
                 Admin Dashboard
               </button>
+              <button
+                id="logoutButton"
+                class="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+              >
+                Logout
+              </button>
             </div>
             <div class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
             <div class="rounded-2xl bg-white/10 px-4 py-3">
@@ -174,6 +259,10 @@
               <div class="text-slate-200">Scale</div>
               <div class="mt-1 text-2xl font-semibold">1-5</div>
             </div>
+            </div>
+            <div class="rounded-2xl bg-white/10 px-4 py-3 text-sm text-slate-100">
+              <div class="text-slate-200">Signed in as</div>
+              <div id="authEmailLabel" class="mt-1 truncate text-base font-semibold">Not signed in</div>
             </div>
           </div>
         </div>
@@ -366,11 +455,20 @@
       };
 
       const state = {
-        view: "landing",
+        view: "login",
         currentPillarIndex: 0,
+        auth: {
+          loading: true,
+          email: "",
+          isAdmin: false,
+          magicLinkSentTo: "",
+          status: "",
+          error: ""
+        },
         user: {
           name: "",
-          department: ""
+          department: "",
+          consent: false
         },
         responses: {},
         chart: null,
@@ -394,11 +492,21 @@
 
       function render() {
         bindGlobalNav();
-        if (state.view === "landing") {
+        if (state.auth.loading) {
+          renderLoadingState();
+        } else if (state.view === "login") {
+          renderLogin();
+        } else if (state.view === "landing") {
           renderLanding();
         } else if (state.view === "assessment") {
           renderAssessment();
         } else if (state.view === "admin") {
+          if (!state.auth.isAdmin) {
+            state.view = "landing";
+            syncRoute();
+            renderLanding();
+            return;
+          }
           renderAdminDashboard();
         } else {
           renderResults();
@@ -408,11 +516,30 @@
       function bindGlobalNav() {
         const assessmentButton = document.getElementById("assessmentNavButton");
         const adminButton = document.getElementById("adminNavButton");
+        const logoutButton = document.getElementById("logoutButton");
+        const authEmailLabel = document.getElementById("authEmailLabel");
+
+        if (assessmentButton) {
+          assessmentButton.classList.toggle("hidden", !state.auth.email);
+        }
+
+        if (adminButton) {
+          adminButton.classList.toggle("hidden", !state.auth.isAdmin);
+        }
+
+        if (logoutButton) {
+          logoutButton.classList.toggle("hidden", !state.auth.email);
+        }
+
+        if (authEmailLabel) {
+          authEmailLabel.textContent = state.auth.email || "Not signed in";
+        }
 
         if (assessmentButton && !assessmentButton.dataset.bound) {
           assessmentButton.dataset.bound = "true";
           assessmentButton.addEventListener("click", () => {
-            state.view = "landing";
+            state.view = state.auth.email ? "landing" : "login";
+            syncRoute();
             render();
             window.scrollTo({ top: 0, behavior: "smooth" });
           });
@@ -421,7 +548,14 @@
         if (adminButton && !adminButton.dataset.bound) {
           adminButton.dataset.bound = "true";
           adminButton.addEventListener("click", async () => {
+            if (!state.auth.isAdmin) {
+              state.view = "landing";
+              syncRoute();
+              render();
+              return;
+            }
             state.view = "admin";
+            syncRoute();
             render();
             window.scrollTo({ top: 0, behavior: "smooth" });
             if (!state.admin.records.length) {
@@ -429,12 +563,121 @@
             }
           });
         }
+
+        if (logoutButton && !logoutButton.dataset.bound) {
+          logoutButton.dataset.bound = "true";
+          logoutButton.addEventListener("click", async () => {
+            if (!firebaseAuth) return;
+            await firebaseAuth.signOut();
+            window.localStorage.removeItem(magicLinkStorageKey);
+            state.auth.status = "You have been signed out.";
+            state.auth.error = "";
+            state.auth.email = "";
+            state.auth.isAdmin = false;
+            state.user.name = "";
+            state.user.department = "";
+            state.user.consent = false;
+            state.responses = {};
+            state.view = "login";
+            syncRoute();
+            render();
+          });
+        }
+      }
+
+      function renderLoadingState() {
+        app.innerHTML = `
+          <section class="fade-in-up mx-auto flex min-h-[50vh] w-full max-w-3xl items-center justify-center px-4 sm:px-6">
+            <div class="glass card-surface w-full rounded-[28px] border border-white/70 p-8 text-center">
+              <div class="mx-auto h-12 w-12 animate-pulse rounded-full bg-accentSoft"></div>
+              <h2 class="mt-5 text-2xl font-semibold text-ink">Preparing GovScale</h2>
+              <p class="mt-3 text-sm leading-7 text-slate">Verifying your session and loading secure access controls.</p>
+            </div>
+          </section>
+        `;
+      }
+
+      function renderLogin() {
+        app.innerHTML = `
+          <section class="fade-in-up mx-auto flex min-h-[68vh] w-full max-w-4xl items-center justify-center px-4 sm:px-6">
+            <div class="glass card-surface w-full max-w-xl rounded-[32px] border border-white/70 p-8 sm:p-10">
+              <div class="text-center">
+                <div class="mx-auto inline-flex rounded-full bg-accentSoft px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-accent">GovScale</div>
+                <h2 class="mt-5 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Secure Government Access</h2>
+                <p class="mt-4 text-sm leading-7 text-slate sm:text-base">
+                  Sign in with your government email address to access the Exponential Maturity Assessment.
+                </p>
+              </div>
+
+              <form id="loginForm" class="mt-8 space-y-5">
+                <div>
+                  <label for="governmentEmail" class="mb-2 block text-sm font-medium text-slate">Government Email Address</label>
+                  <input
+                    id="governmentEmail"
+                    name="governmentEmail"
+                    type="email"
+                    required
+                    value="${escapeHtml(state.auth.magicLinkSentTo || state.auth.email)}"
+                    placeholder="name@government.gov.ae"
+                    class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink outline-none ring-0 transition focus:border-accent focus:shadow-lg"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="inline-flex w-full items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-700"
+                >
+                  Send Magic Link
+                </button>
+              </form>
+
+              <div class="mt-5 rounded-2xl bg-fog px-4 py-4 text-sm leading-7 text-slate">
+                Use your official government email. We’ll send a secure sign-in link and keep your session active across refreshes.
+              </div>
+
+              ${state.auth.status ? `<div class="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">${escapeHtml(state.auth.status)}</div>` : ""}
+              ${state.auth.error ? `<div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">${escapeHtml(state.auth.error)}</div>` : ""}
+            </div>
+          </section>
+        `;
+
+        const loginForm = document.getElementById("loginForm");
+        loginForm.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (!firebaseAuth) {
+            state.auth.error = "Firebase Authentication is not available.";
+            state.auth.status = "";
+            renderLogin();
+            return;
+          }
+
+          const email = document.getElementById("governmentEmail").value.trim().toLowerCase();
+          if (!email) {
+            state.auth.error = "Please enter your government email address.";
+            state.auth.status = "";
+            renderLogin();
+            return;
+          }
+
+          try {
+            await firebaseAuth.sendSignInLinkToEmail(email, magicLinkSettings);
+            window.localStorage.setItem(magicLinkStorageKey, email);
+            state.auth.magicLinkSentTo = email;
+            state.auth.status = `Magic link sent to ${email}. Open it on this device to continue.`;
+            state.auth.error = "";
+            renderLogin();
+          } catch (error) {
+            console.error("Failed to send magic link:", error);
+            state.auth.error = "We could not send the magic link. Verify the email address and Firebase Authentication settings.";
+            state.auth.status = "";
+            renderLogin();
+          }
+        });
       }
 
       function renderLanding() {
         app.innerHTML = `
-          <section class="fade-in grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-            <div class="rounded-[28px] bg-gradient-to-br from-navy to-ink p-8 text-white shadow-card">
+          <section class="fade-in-up mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 md:flex-row">
+            <div class="skyline-hero card-surface rounded-[28px] p-6 text-white sm:p-8 md:w-[52%]">
               <div class="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em]">
                 Government Readiness Diagnostic
               </div>
@@ -442,7 +685,7 @@
                 Measure institutional maturity across strategy, operations, and future readiness.
               </h2>
               <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
-                GovScale helps leaders understand organizational readiness through a structured 34-question assessment, weighted scoring logic, and a visual executive scorecard.
+                GovScale helps leaders understand organizational readiness through a structured 37-question assessment, weighted scoring logic, and a visual executive scorecard.
               </p>
               <div class="mt-8 grid gap-4 sm:grid-cols-3">
                 <div class="rounded-2xl bg-white/10 p-4">
@@ -460,7 +703,7 @@
               </div>
             </div>
 
-            <div class="glass rounded-[28px] border border-white/70 p-8 shadow-card">
+            <div class="glass card-surface rounded-[28px] border border-white/70 p-6 sm:p-8 md:w-[48%]">
               <div class="mb-6">
                 <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">
                   View 1
@@ -494,9 +737,21 @@
                     value="${escapeHtml(state.user.department)}"
                   />
                 </div>
+                <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-fog px-4 py-4 text-sm leading-6 text-slate">
+                  <input
+                    id="consentCheckbox"
+                    name="consentCheckbox"
+                    type="checkbox"
+                    class="mt-1 h-4 w-4 rounded border-slate-300 text-accent"
+                    ${state.user.consent ? "checked" : ""}
+                  />
+                  <span>I consent to my responses being collected for organizational maturity analysis. Data will be handled in accordance with UAE data protection regulations.</span>
+                </label>
                 <button
+                  id="startAssessmentButton"
                   type="submit"
-                  class="inline-flex w-full items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-700"
+                  class="inline-flex w-full items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  ${state.user.consent ? "" : "disabled"}
                 >
                   Start Assessment
                 </button>
@@ -509,17 +764,30 @@
           event.preventDefault();
           const name = document.getElementById("userName").value.trim();
           const department = document.getElementById("department").value.trim();
+          const consent = document.getElementById("consentCheckbox").checked;
 
           if (!name || !department) {
             alert("Please enter both User Name and Government Department to continue.");
             return;
           }
 
+          if (!consent) {
+            alert("Please provide privacy consent to continue.");
+            return;
+          }
+
           state.user.name = name;
           state.user.department = department;
+          state.user.consent = consent;
           state.view = "assessment";
+          syncRoute();
           state.currentPillarIndex = 0;
           render();
+        });
+
+        document.getElementById("consentCheckbox").addEventListener("change", (event) => {
+          state.user.consent = event.target.checked;
+          document.getElementById("startAssessmentButton").disabled = !state.user.consent;
         });
       }
 
@@ -529,8 +797,36 @@
         const answeredCount = countAnsweredInPillar(pillar.id);
 
         app.innerHTML = `
-          <section class="fade-in grid gap-6 lg:grid-cols-[0.88fr_1.12fr]">
-            <aside class="glass rounded-[28px] border border-white/70 p-6 shadow-card lg:sticky lg:top-6 lg:h-fit">
+          <section class="fade-in-up mx-auto grid w-full max-w-7xl gap-6 px-4 sm:px-6 lg:grid-cols-[0.88fr_1.12fr]">
+            <div class="glass card-surface overflow-x-auto rounded-[24px] border border-white/70 p-4 md:hidden">
+              <div class="mb-3 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.16em] text-slate">
+                <span>Pillars</span>
+                <span>${state.currentPillarIndex + 1} / ${assessmentData.length}</span>
+              </div>
+              <div class="flex min-w-max gap-3 pb-1">
+                ${assessmentData
+                  .map(
+                    (item, index) => `
+                      <button
+                        type="button"
+                        data-pillarnav="${index}"
+                        class="flex min-w-[160px] items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
+                          index === state.currentPillarIndex
+                            ? "border-accent bg-accent text-white shadow-sm"
+                            : index < state.currentPillarIndex
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              : "border-slate-200 bg-white text-ink hover:border-accent/40"
+                        }"
+                      >
+                        <span>${index + 1}. ${escapeHtml(item.shortName)}</span>
+                        <span class="text-xs ${index === state.currentPillarIndex ? "text-white/90" : "text-slate"}">${countAnsweredInPillar(item.id)}/${item.questions.length}</span>
+                      </button>
+                    `
+                  )
+                  .join("")}
+              </div>
+            </div>
+            <aside class="glass card-surface hidden rounded-[28px] border border-white/70 p-6 md:block lg:sticky lg:top-6 lg:h-fit">
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">View 2</p>
@@ -587,7 +883,7 @@
               </div>
             </aside>
 
-            <section class="glass rounded-[28px] border border-white/70 p-6 shadow-card sm:p-8">
+            <section class="glass card-surface rounded-[28px] border border-white/70 p-6 sm:p-8">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Likert Scale</p>
@@ -609,7 +905,7 @@
                     return `
                       <div class="rounded-[26px] border border-slate-200 bg-white p-5">
                         <div class="mb-4 text-sm leading-7 text-ink">${escapeHtml(question)}</div>
-                        <div class="grid gap-3 sm:grid-cols-5">
+                        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                           ${likertLabels
                             .map((option) => {
                               const checked = state.responses[questionKey] === option.value ? "checked" : "";
@@ -622,7 +918,7 @@
                                     value="${option.value}"
                                     ${checked}
                                   />
-                                  <span class="block rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-medium text-slate transition hover:border-accent hover:text-accent">
+                                  <span class="flex min-h-12 min-w-12 items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-center text-sm font-medium text-slate transition hover:border-accent hover:text-accent">
                                     <span class="block text-lg font-semibold">${option.value}</span>
                                     <span class="mt-1 block text-xs leading-5">${option.label}</span>
                                   </span>
@@ -641,7 +937,7 @@
                 <button
                   id="backButton"
                   type="button"
-                  class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-slate-400 hover:text-ink ${state.currentPillarIndex === 0 ? "invisible" : ""}"
+                  class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-slate-400 hover:text-ink sm:w-auto ${state.currentPillarIndex === 0 ? "invisible sm:visible" : ""}"
                 >
                   Back
                 </button>
@@ -649,7 +945,7 @@
                 <button
                   id="nextButton"
                   type="button"
-                  class="inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-700"
+                  class="inline-flex w-full items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-teal-700 sm:w-auto"
                 >
                   ${state.currentPillarIndex === assessmentData.length - 1 ? "Generate Scorecard" : "Next Pillar"}
                 </button>
@@ -662,6 +958,13 @@
       }
 
       function bindAssessmentEvents(pillar) {
+        document.querySelectorAll("[data-pillarnav]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.currentPillarIndex = Number(button.dataset.pillarnav);
+            renderAssessment();
+          });
+        });
+
         const radios = document.querySelectorAll(`input[name^="${pillar.id}-"]`);
         radios.forEach((radio) => {
           radio.addEventListener("change", (event) => {
@@ -677,6 +980,7 @@
           backButton.addEventListener("click", () => {
             if (state.currentPillarIndex > 0) {
               state.currentPillarIndex -= 1;
+              syncRoute();
               render();
               window.scrollTo({ top: 0, behavior: "smooth" });
             }
@@ -691,12 +995,14 @@
 
           if (state.currentPillarIndex < assessmentData.length - 1) {
             state.currentPillarIndex += 1;
+            syncRoute();
             render();
             window.scrollTo({ top: 0, behavior: "smooth" });
             return;
           }
 
           state.view = "results";
+          syncRoute();
           render();
           window.scrollTo({ top: 0, behavior: "smooth" });
         });
@@ -707,8 +1013,8 @@
         const stageTone = getStageTone(results.stage);
 
         app.innerHTML = `
-          <section id="resultsBoard" class="fade-in grid gap-6">
-            <section class="executive-banner overflow-hidden rounded-[32px] p-8 text-white shadow-glow lg:p-10">
+          <section id="resultsBoard" class="fade-in-up mx-auto grid w-full max-w-7xl gap-6 px-4 sm:px-6">
+            <section class="executive-banner card-surface overflow-hidden rounded-[32px] p-6 text-white shadow-glow lg:p-10">
               <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
                 <div class="max-w-3xl">
                   <p class="text-sm font-semibold uppercase tracking-[0.24em] text-white/80">Executive Summary Board</p>
@@ -758,8 +1064,8 @@
               </div>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-2">
-              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+            <section class="print-stack grid gap-6 lg:grid-cols-2">
+              <div class="glass card-surface rounded-[32px] border border-white/70 p-6 sm:p-8">
                 <div class="flex items-end justify-between gap-4">
                   <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Section B</p>
@@ -769,12 +1075,12 @@
                     Radar Chart
                   </div>
                 </div>
-                <div class="mt-6 rounded-[28px] bg-white p-5">
+                <div class="print-chart-box mt-6 rounded-[28px] bg-white p-5">
                   <canvas id="radarChart" height="340"></canvas>
                 </div>
               </div>
 
-              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+              <div class="glass card-surface rounded-[32px] border border-white/70 p-6 sm:p-8">
                 <div class="flex items-end justify-between gap-4">
                   <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Section B</p>
@@ -810,7 +1116,7 @@
                                 (dimension) => `
                                   <div>
                                     <div class="mb-2 flex items-center justify-between gap-3 text-xs font-medium text-slate">
-                                      <span class="uppercase tracking-[0.12em]">${escapeHtml(dimension.name)}</span>
+                                      <span class="tracking-[0.02em]">${escapeHtml(dimension.name)}</span>
                                       <span>${dimension.average.toFixed(1)} / 5.0</span>
                                     </div>
                                     <div class="gap-track h-2 overflow-hidden rounded-full">
@@ -832,7 +1138,7 @@
               </div>
             </section>
 
-            <section class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+            <section class="glass card-surface rounded-[32px] border border-white/70 p-6 sm:p-8">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Section C</p>
@@ -841,24 +1147,24 @@
                 <div class="flex flex-col gap-3 sm:flex-row">
                   <button
                     id="printButton"
-                    class="inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+                    class="no-print inline-flex items-center justify-center rounded-2xl bg-accent px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
                   >
                     Export PDF
                   </button>
                   <button
                     id="restartButton"
-                    class="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-accent hover:text-accent"
+                    class="no-print inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate transition hover:border-accent hover:text-accent"
                   >
                     Restart Assessment
                   </button>
                 </div>
               </div>
 
-              <div class="mt-8 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+              <div class="print-narrative-grid mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
                 ${results.pillars
                   .map(
                     (pillar) => `
-                      <article class="rounded-[30px] border border-slate-200 bg-white p-5 shadow-sm">
+                      <article class="avoid-break card-surface rounded-[30px] border border-slate-200 bg-white p-5">
                         <div class="flex items-start justify-between gap-4">
                           <div>
                             <p class="text-xs font-semibold uppercase tracking-[0.18em]" style="color:${pillar.accent}">
@@ -867,7 +1173,7 @@
                             <h4 class="mt-2 text-xl font-semibold text-ink">${escapeHtml(pillar.name)}</h4>
                             <p class="mt-2 text-sm text-slate">${pillar.average.toFixed(1)} / 5.0</p>
                           </div>
-                          <div class="relative gauge h-24 w-24 rounded-full" style="--value:${pillar.average}; --accent:${pillar.accent}">
+                          <div class="relative mx-auto gauge h-24 w-24 rounded-full sm:h-28 sm:w-28" style="--value:${pillar.average}; --accent:${pillar.accent}">
                             <div class="absolute inset-0 flex items-center justify-center text-lg font-semibold text-ink">${pillar.average.toFixed(1)}</div>
                           </div>
                         </div>
@@ -879,7 +1185,7 @@
                             .map(
                               (dimension) => `
                                 <div class="rounded-2xl border border-slate-200 bg-white px-3 py-2">
-                                  <div class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate">${escapeHtml(dimension.name)}</div>
+                                  <div class="text-[11px] font-semibold tracking-[0.02em] text-slate">${escapeHtml(dimension.name)}</div>
                                   <div class="mt-1 text-sm font-semibold text-ink">${dimension.average.toFixed(1)} / 5.0</div>
                                 </div>
                               `
@@ -913,6 +1219,7 @@
           state.responses = {};
           state.saveStatus = "";
           state.savedAssessmentKey = null;
+          syncRoute();
           if (state.chart) {
             state.chart.destroy();
             state.chart = null;
@@ -928,11 +1235,13 @@
 
       function renderAdminDashboard() {
         const filteredRecords = getFilteredAdminRecords();
-        const departmentOptions = [...new Set(state.admin.records.map((record) => record.department).filter(Boolean))].sort();
+        const departmentAggregates = getDepartmentAggregates(filteredRecords);
+        const allDepartmentOptions = [...new Set(state.admin.records.map((record) => record.department).filter(Boolean))].sort();
+        const visibleDepartmentAggregates = departmentAggregates.filter((aggregate) => !aggregate.isConfidential);
+        const compareableDepartmentOptions = visibleDepartmentAggregates.map((aggregate) => aggregate.department);
         const compareDepartments = state.admin.compareDepartments.length
           ? state.admin.compareDepartments
-          : departmentOptions.slice(0, Math.min(3, departmentOptions.length));
-        const departmentAggregates = getDepartmentAggregates(filteredRecords);
+          : compareableDepartmentOptions.slice(0, Math.min(3, compareableDepartmentOptions.length));
         const organizationScore =
           filteredRecords.length
             ? filteredRecords.reduce((sum, record) => sum + record.finalScore, 0) / filteredRecords.length
@@ -941,8 +1250,8 @@
         const organizationTone = getStageTone(organizationStage);
 
         app.innerHTML = `
-          <section id="adminBoard" class="fade-in grid gap-6">
-            <section class="executive-banner overflow-hidden rounded-[32px] p-8 text-white shadow-glow lg:p-10">
+          <section id="adminBoard" class="fade-in-up mx-auto grid w-full max-w-7xl gap-6 px-4 sm:px-6">
+            <section class="executive-banner card-surface overflow-hidden rounded-[32px] p-6 text-white shadow-glow lg:p-10">
               <div class="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
                 <div class="max-w-3xl">
                   <p class="text-sm font-semibold uppercase tracking-[0.24em] text-white/80">Admin Dashboard</p>
@@ -978,13 +1287,13 @@
                   <div class="mt-5 flex flex-col gap-3 sm:flex-row">
                     <button
                       id="exportAdminPdfButton"
-                      class="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-accent transition hover:bg-slate-100"
+                      class="no-print inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-accent transition hover:bg-slate-100"
                     >
                       Export Executive Report (PDF)
                     </button>
                     <button
                       id="adminBackButton"
-                      class="inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                      class="no-print inline-flex items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
                     >
                       Back to Assessment
                     </button>
@@ -993,7 +1302,7 @@
               </div>
             </section>
 
-            <section class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+            <section class="glass card-surface rounded-[32px] border border-white/70 p-6 sm:p-8">
               <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Global Filters</p>
@@ -1012,7 +1321,7 @@
                     <span class="mb-2 block font-medium text-slate">Department</span>
                     <select id="adminDepartmentFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-ink">
                       <option value="all">All departments</option>
-                      ${departmentOptions
+                      ${allDepartmentOptions
                         .map(
                           (department) => `
                             <option value="${escapeHtml(department)}" ${state.admin.departmentFilter === department ? "selected" : ""}>
@@ -1026,7 +1335,8 @@
                   <div class="block text-sm">
                     <span class="mb-2 block font-medium text-slate">Compare Departments (2-3)</span>
                     <div id="compareDepartmentOptions" class="grid max-h-32 gap-2 overflow-auto rounded-2xl border border-slate-200 bg-white p-3">
-                      ${departmentOptions
+                      ${compareableDepartmentOptions.length
+                        ? compareableDepartmentOptions
                         .map(
                           (department) => `
                             <label class="flex items-center gap-2 text-sm text-ink">
@@ -1041,15 +1351,16 @@
                             </label>
                           `
                         )
-                        .join("")}
+                        .join("")
+                        : `<div class="text-sm text-slate">No departments currently meet the confidentiality threshold for comparison.</div>`}
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+            <section class="print-stack grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <div class="glass card-surface rounded-[32px] border border-white/70 p-6 sm:p-8">
                 <div class="flex items-end justify-between gap-4">
                   <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Department Ranking Leaderboard</p>
@@ -1087,6 +1398,19 @@
                       ${filteredRecords.length
                         ? getSortedAdminRecords(filteredRecords)
                             .map((record) => {
+                              if (record.isConfidential) {
+                                return `
+                                  <tr class="bg-slate-50/80">
+                                    <td class="px-4 py-4 font-semibold text-slate">${escapeHtml(record.department)}</td>
+                                    <td colspan="4" class="px-4 py-4 text-slate">
+                                      <span class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                                        Insufficient data
+                                      </span>
+                                      <span class="ml-3">Insufficient data — minimum 3 responses required for confidentiality.</span>
+                                    </td>
+                                  </tr>
+                                `;
+                              }
                               const tone = getStageTone(record.stage);
                               return `
                                 <tr>
@@ -1113,7 +1437,7 @@
                 </div>
               </div>
 
-              <div class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+              <div class="glass card-surface rounded-[32px] border border-white/70 p-6 sm:p-8">
                 <div class="flex items-end justify-between gap-4">
                   <div>
                     <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Cross-Department Radar</p>
@@ -1123,13 +1447,16 @@
                     Up to 3 departments
                   </div>
                 </div>
-                <div class="mt-6 rounded-[28px] bg-white p-5">
+                <div class="print-chart-box mt-6 rounded-[28px] bg-white p-5">
                   <canvas id="adminRadarChart" height="340"></canvas>
                 </div>
+                <p class="mt-4 text-xs leading-6 text-slate">
+                  Departments with fewer than 3 completed responses are excluded from this comparison to preserve confidentiality.
+                </p>
               </div>
             </section>
 
-            <section class="glass rounded-[32px] border border-white/70 p-6 shadow-card sm:p-8">
+            <section class="glass card-surface rounded-[32px] border border-white/70 p-6 sm:p-8">
               <div class="flex items-end justify-between gap-4">
                 <div>
                   <p class="text-sm font-semibold uppercase tracking-[0.2em] text-accent">Organization Heatmap</p>
@@ -1148,23 +1475,38 @@
                     ${departmentAggregates.length
                       ? departmentAggregates
                           .map(
-                            (aggregate) => `
-                              <tr>
-                                <td class="px-4 py-4 font-semibold text-ink">${escapeHtml(aggregate.department)}</td>
-                                ${aggregate.pillars
-                                  .map((pillar) => {
-                                    const heatmap = getHeatmapTone(pillar.average);
-                                    return `
-                                      <td class="px-4 py-4">
-                                        <div class="rounded-2xl px-3 py-2 text-center font-semibold" style="background:${heatmap.background}; color:${heatmap.text}">
-                                          ${pillar.average.toFixed(1)}
-                                        </div>
-                                      </td>
-                                    `;
-                                  })
-                                  .join("")}
-                              </tr>
-                            `
+                            (aggregate) => {
+                              if (aggregate.isConfidential) {
+                                return `
+                                  <tr class="bg-slate-50/80">
+                                    <td class="px-4 py-4 font-semibold text-slate">${escapeHtml(aggregate.department)}</td>
+                                    <td colspan="${assessmentData.length}" class="px-4 py-4 text-slate">
+                                      <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 px-4 py-3 text-center font-medium">
+                                        Insufficient data — minimum 3 responses required for confidentiality.
+                                      </div>
+                                    </td>
+                                  </tr>
+                                `;
+                              }
+
+                              return `
+                                <tr>
+                                  <td class="px-4 py-4 font-semibold text-ink">${escapeHtml(aggregate.department)}</td>
+                                  ${aggregate.pillars
+                                    .map((pillar) => {
+                                      const heatmap = getHeatmapTone(pillar.average);
+                                      return `
+                                        <td class="px-4 py-4">
+                                          <div class="rounded-2xl px-3 py-2 text-center font-semibold" style="background:${heatmap.background}; color:${heatmap.text}">
+                                            ${pillar.average.toFixed(1)}
+                                          </div>
+                                        </td>
+                                      `;
+                                    })
+                                    .join("")}
+                                </tr>
+                              `;
+                            }
                           )
                           .join("")
                       : `
@@ -1272,6 +1614,7 @@
         if (backButton) {
           backButton.addEventListener("click", () => {
             state.view = "landing";
+            syncRoute();
             render();
           });
         }
@@ -1325,6 +1668,7 @@
         });
 
         return Array.from(groups.entries()).map(([department, entries]) => {
+          const isConfidential = entries.length < 3;
           const pillars = assessmentData.map((pillar) => {
             const average =
               entries.reduce((sum, entry) => {
@@ -1340,6 +1684,8 @@
 
           return {
             department,
+            responseCount: entries.length,
+            isConfidential,
             pillars,
             finalScore: entries.reduce((sum, entry) => sum + entry.finalScore, 0) / entries.length
           };
@@ -1362,7 +1708,7 @@
 
         const datasets = compareDepartments
           .map((department, index) => {
-            const aggregate = departmentAggregates.find((item) => item.department === department);
+            const aggregate = departmentAggregates.find((item) => item.department === department && !item.isConfidential);
             if (!aggregate) return null;
             const color = palette[index % palette.length];
             return {
@@ -1651,13 +1997,15 @@
 
         return {
           id,
+          email: data.email || data.respondent?.email || "",
           department: data.respondent?.department || "Unknown Department",
           respondentName: data.respondent?.name || "Unknown Respondent",
           date,
           finalScore: typeof data.finalScore === "number" ? data.finalScore : computed.finalScore,
           stage: data.maturityStage || computed.stage,
           pillars: computed.pillars,
-          responseLookup
+          responseLookup,
+          consent: Boolean(data.consent)
         };
       }
 
@@ -1668,14 +2016,17 @@
           return;
         }
 
+        await new Promise((resolve) => window.requestAnimationFrame(() => setTimeout(resolve, 220)));
+
         const canvas = await window.html2canvas(target, {
-          scale: 2,
+          scale: 2.4,
+          useCORS: true,
           backgroundColor: "#f8fcff"
         });
 
         const image = canvas.toDataURL("image/png");
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF("p", "mm", "a4");
+        const pdf = new jsPDF(sectionId === "adminBoard" ? "l" : "p", "mm", "a4");
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
         const imageWidth = pageWidth - 12;
@@ -1708,16 +2059,122 @@
       };
 
       let firestoreDb = null;
+      let firebaseAuth = null;
+      const magicLinkStorageKey = "govscaleEmailForSignIn";
+      const magicLinkSettings = {
+        url: window.location.origin + window.location.pathname,
+        handleCodeInApp: true
+      };
 
       try {
         if (window.firebase) {
           if (!window.firebase.apps.length) {
             window.firebase.initializeApp(firebaseConfig);
           }
+          firebaseAuth = window.firebase.auth();
           firestoreDb = window.firebase.firestore();
         }
       } catch (error) {
         console.error("Firebase initialization failed:", error);
+      }
+
+      function syncRoute() {
+        const hash = state.view === "admin" ? "#admin" : state.view === "assessment" ? "#assessment" : state.view === "results" ? "#results" : "";
+        const nextUrl = `${window.location.pathname}${hash}`;
+        window.history.replaceState({}, "", nextUrl);
+      }
+
+      function applyRouteGuard() {
+        const hash = window.location.hash.replace("#", "");
+        if (hash === "admin" && state.auth.isAdmin) {
+          state.view = "admin";
+          return;
+        }
+        if (hash === "results" && state.auth.email) {
+          state.view = "results";
+          return;
+        }
+        if (hash === "assessment" && state.auth.email) {
+          state.view = "assessment";
+          return;
+        }
+        state.view = state.auth.email ? "landing" : "login";
+        syncRoute();
+      }
+
+      async function checkAdminAccess(email) {
+        if (!firestoreDb || !email) return false;
+        try {
+          const configDoc = await firestoreDb.collection("config").doc("admins").get();
+          const admins = configDoc.exists ? configDoc.data().emails || [] : [];
+          return admins.map((item) => String(item).toLowerCase()).includes(String(email).toLowerCase());
+        } catch (error) {
+          console.error("Failed to resolve admin access:", error);
+          return false;
+        }
+      }
+
+      async function completeMagicLinkSignIn() {
+        if (!firebaseAuth || !firebaseAuth.isSignInWithEmailLink(window.location.href)) return;
+
+        let email = window.localStorage.getItem(magicLinkStorageKey) || "";
+        if (!email) {
+          email = window.prompt("Confirm your government email address to complete sign-in:") || "";
+        }
+
+        if (!email) {
+          state.auth.loading = false;
+          state.auth.error = "Email confirmation is required to complete magic link sign-in.";
+          state.view = "login";
+          render();
+          return;
+        }
+
+        try {
+          await firebaseAuth.signInWithEmailLink(email, window.location.href);
+          window.localStorage.removeItem(magicLinkStorageKey);
+          window.history.replaceState({}, "", window.location.pathname);
+        } catch (error) {
+          console.error("Magic link sign-in failed:", error);
+          state.auth.loading = false;
+          state.auth.error = "The magic link is invalid or expired. Please request a new one.";
+          state.auth.status = "";
+          state.view = "login";
+          render();
+        }
+      }
+
+      async function initializeAuthSession() {
+        if (!firebaseAuth) {
+          state.auth.loading = false;
+          state.auth.error = "Firebase Authentication is not configured.";
+          state.view = "login";
+          render();
+          return;
+        }
+
+        await completeMagicLinkSignIn();
+
+        firebaseAuth.onAuthStateChanged(async (user) => {
+          state.auth.loading = false;
+          state.auth.email = user?.email || "";
+          state.auth.isAdmin = await checkAdminAccess(state.auth.email);
+          state.auth.error = "";
+          if (user?.email) {
+            state.auth.status = "";
+            state.auth.magicLinkSentTo = user.email;
+          }
+          applyRouteGuard();
+          render();
+          if (state.view === "admin" && state.auth.isAdmin && !state.admin.records.length) {
+            await loadAdminRecords();
+          }
+        });
+
+        window.addEventListener("hashchange", () => {
+          applyRouteGuard();
+          render();
+        });
       }
 
       function updateSaveStatus() {
@@ -1762,10 +2219,13 @@
 
         try {
           const docRef = await firestoreDb.collection("assessments").add({
+            email: state.auth.email,
             respondent: {
               name: state.user.name,
-              department: state.user.department
+              department: state.user.department,
+              email: state.auth.email
             },
+            consent: state.user.consent,
             finalScore: Number(results.finalScore.toFixed(2)),
             maturityStage: results.stage,
             overallComment: results.overallComment,
@@ -1793,7 +2253,7 @@
         }
       }
 
-      render();
+      initializeAuthSession();
     </script>
   </body>
 </html>
